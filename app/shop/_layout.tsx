@@ -41,6 +41,13 @@ export default function ShopLayout() {
           presentation: 'modal'
         }} 
       />
+      <Stack.Screen 
+        name="orders" 
+        options={{ 
+          title: 'Orders',
+          headerShown: true,
+        }} 
+      />
     </Stack>
   );
 }

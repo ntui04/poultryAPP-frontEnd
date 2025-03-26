@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { House, Store, MessageCircle, ShieldPlus } from 'lucide-react-native';
+import { House, Store, MessageCircle, ShieldPlus,Newspaper } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -38,6 +38,14 @@ export default function TabLayout() {
         options={{
           title: 'consultation',
           tabBarIcon: ({ color, size }) => <MessageCircle size={size + 2} color={color} />,
+        }}
+
+      />
+      <Tabs.Screen
+        name="education"
+        options={{
+          title: 'education',
+          tabBarIcon: ({ color, size }) => <Newspaper size={size + 2} color={color} />,
         }}
       />
       <Tabs.Screen

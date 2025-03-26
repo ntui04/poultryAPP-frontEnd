@@ -15,34 +15,46 @@ export default function Login() {
     normal: {
       email: 'user@example.com',
       password: 'password123',
-      redirectPath: '/(tabs)' // Regular user tabs
+      redirectPath: '/(tabs)', // Regular user tabs
     },
     agrovet: {
       email: 'agrovet@example.com',
       password: 'password123',
-      redirectPath: '/(vetTabs)' // Agrovet-specific tabs
-    }
+      redirectPath: '/(vetTabs)', // Agrovet-specific tabs
+    },
+    consultvet: {
+      email: 'consultvet@example.com',
+      password: 'password123',
+      redirectPath: '/(consultTabs)', // Agrovet-specific tabs
+    },
   };
 
   const handleLogin = async () => {
     clearError();
     const result = await login(email, password);
-    if (!error) {
-      // Determine redirect based on user role from login result
-      // Assuming your login function returns user data including role
-      if (result && result.userType === 'agrovet') {
-        router.replace('/vetTabs)');
-      } else {
-        router.replace('/(tabs)');
+  
+    if (!error && result) {
+      // Determine redirect based on user role
+      switch (result.userType) {
+        case 'agrovet':
+          router.replace('/vetTabs');
+          break;
+        case 'consultvet':
+          router.replace('/consultTabs');
+          break;
+        default: // Normal user
+          router.replace('/(tabs)');
+          break;
       }
     }
   };
+  
 
   const loginAsDefaultUser = (userType) => {
     const userData = defaultUsers[userType];
     setEmail(userData.email);
     setPassword(userData.password);
-    
+
     // Auto-login with specific redirect
     clearError();
     login(userData.email, userData.password).then((result) => {
@@ -64,10 +76,10 @@ export default function Login() {
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to continue to Poultry Pro</Text>
       </View>
-      
+
       <View style={styles.form}>
         {error && <Text style={styles.error}>{error}</Text>}
-        
+
         <Input
           label="Email Address"
           value={email}
@@ -77,23 +89,21 @@ export default function Login() {
           autoCapitalize="none"
           containerStyle={{ marginBottom: 16 }}
         />
-        
-        <Input
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Enter your password"
-          secureTextEntry
-          containerStyle={{ marginBottom: 24 }}
-        />
-        
-        <Button 
-          onPress={handleLogin} 
-          loading={isLoading}
-        >
+
+        <View style={{ marginBottom: 24 }}>
+          <Input
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Enter your password"
+            secureTextEntry
+          />
+        </View>
+
+        <Button onPress={handleLogin} loading={isLoading}>
           Sign In
         </Button>
-        
+
         <View style={styles.links}>
           <Link href="/(auth)/register" style={styles.link}>
             Create an account
@@ -102,22 +112,29 @@ export default function Login() {
             Forgot password?
           </Link>
         </View>
-        
+
         {/* Demo User Selection */}
         <View style={styles.demoContainer}>
           <Text style={styles.demoTitle}>Demo Login Options</Text>
           <View style={styles.demoButtons}>
-            <TouchableOpacity 
-              style={styles.demoButton} 
+            <TouchableOpacity
+              style={styles.demoButton}
               onPress={() => loginAsDefaultUser('normal')}
             >
               <Text style={styles.demoButtonText}>Login as User</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.demoButton, styles.demoButtonAgrovet]} 
+            <TouchableOpacity
+              style={[styles.demoButton, styles.demoButtonAgrovet]}
               onPress={() => loginAsDefaultUser('agrovet')}
             >
               <Text style={styles.demoButtonText}>Login as Agrovet</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.demoButton, styles.demoButtonAgrovetc]}
+              onPress={() => loginAsDefaultUser('consultvet')}
+            >
+              <Text style={styles.demoButtonText}>Login as Vet-officer</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -205,6 +222,9 @@ const styles = StyleSheet.create({
   },
   demoButtonAgrovet: {
     backgroundColor: '#15803d', // Different color for agrovet
+  },
+  demoButtonAgrovetc: {
+    backgroundColor: 'orange', // Different color for agrovet
   },
   demoButtonText: {
     color: '#fff',

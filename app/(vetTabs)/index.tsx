@@ -1,336 +1,225 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  FlatList 
-} from 'react-native';
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  DollarSign, 
-  Package, 
-  AlertCircle,
-  ChevronRight
-} from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, Pressable, RefreshControl } from 'react-native';
+import { router } from 'expo-router';
+import { MapPin, Clock, Phone, CreditCard as Edit2, Plus, Package } from 'lucide-react-native';
+import { Button } from '@/components/ui/Button';
 
-export default function AgrovetDashboard() {
-  // Sample data
-  const [upcomingVisits, setUpcomingVisits] = useState([
-    { id: '1', clientName: 'John Smith Farm', date: '2025-03-25', time: '9:00 AM', type: 'Vaccination' },
-    { id: '2', clientName: 'Green Acres', date: '2025-03-25', time: '2:00 PM', type: 'Consultation' },
-    { id: '3', clientName: 'Mountain Poultry', date: '2025-03-26', time: '10:30 AM', type: 'Health Check' },
-  ]);
+export default function ShopProfile() {
+  const [refreshing, setRefreshing] = useState(false);
   
-  const [lowStockItems, setLowStockItems] = useState([
-    { id: '1', name: 'Amoxicillin 250mg', quantity: 5, threshold: 10 },
-    { id: '2', name: 'Coccidiosis Vaccine', quantity: 3, threshold: 15 },
-    { id: '3', name: 'Vitamin B Complex', quantity: 8, threshold: 20 },
-  ]);
+  const shopData = {
+    name: "Farm Supply Co.",
+    description: "Your one-stop shop for all poultry farming needs. We offer a wide range of quality products including feeds, medicines, equipment, and more.",
+    address: "123 Farmers Lane, Nairobi",
+    phone: "+254 712 345 678",
+    workingHours: {
+      open: "8:00 AM",
+      close: "6:00 PM",
+      days: "Monday - Saturday"
+    },
+    image: "https://images.unsplash.com/photo-1516594798947-e65505dbb29d",
+    rating: 4.8,
+    totalProducts: 45,
+    totalOrders: 128
+  };
 
-  // Render helper functions
-  const renderVisitItem = ({ item }) => (
-    <TouchableOpacity style={styles.visitItem}>
-      <View style={styles.visitLeftContent}>
-        <View style={styles.visitDateContainer}>
-          <Calendar size={16} color="#15803d" />
-          <Text style={styles.visitDate}>{item.date}</Text>
-        </View>
-        <View style={styles.visitTimeContainer}>
-          <Clock size={16} color="#15803d" />
-          <Text style={styles.visitTime}>{item.time}</Text>
-        </View>
-      </View>
-      <View style={styles.visitMiddleContent}>
-        <Text style={styles.visitClientName}>{item.clientName}</Text>
-        <Text style={styles.visitType}>{item.type}</Text>
-      </View>
-      <ChevronRight size={20} color="#64748b" />
-    </TouchableOpacity>
-  );
-
-  const renderLowStockItem = ({ item }) => (
-    <TouchableOpacity style={styles.stockItem}>
-      <View style={styles.stockInfo}>
-        <Text style={styles.stockName}>{item.name}</Text>
-        <Text style={styles.stockQuantity}>Qty: <Text style={styles.stockQuantityValue}>{item.quantity}</Text></Text>
-      </View>
-      <View style={styles.stockAlert}>
-        <AlertCircle size={16} color="#ef4444" />
-        <Text style={styles.stockAlertText}>Low Stock</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Implement refresh logic here
+    setTimeout(() => setRefreshing(false), 1000);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
-        {/* Header Section */}
-        <View style={styles.header}>
-          <Text style={styles.greeting}>Good Morning,</Text>
-          <Text style={styles.name}>Dr. Sarah Johnson</Text>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View style={styles.header}>
+        <Image 
+          source={{ uri: shopData.image }} 
+          style={styles.coverImage}
+        />
+        <View style={styles.overlay} />
+        <View style={styles.headerContent}>
+          <Text style={styles.shopName}>{shopData.name}</Text>
+          <View style={styles.ratingContainer}>
+            <Text style={styles.rating}>★ {shopData.rating}</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.content}>
+        <View style={styles.actionButtons}>
+          <Button
+            onPress={() => router.push('/shop/edit')}
+            variant="outline"
+          >
+            <View style={styles.buttonContent}>
+              <Edit2 size={20} color="#2563eb" />
+              <Text style={styles.buttonText}>Edit Profile</Text>
+            </View>
+          </Button>
+          <Button
+            onPress={() => router.push('/products')}
+          >
+            <View style={styles.buttonContent}>
+              <Package size={20} color="#ffffff" />
+              <Text style={[styles.buttonText, styles.whiteText]}>Manage Products</Text>
+            </View>
+          </Button>
         </View>
 
-        {/* Stats Section */}
+        <Text style={styles.description}>{shopData.description}</Text>
+
+        <View style={styles.infoCard}>
+          <View style={styles.infoRow}>
+            <MapPin size={20} color="#64748b" />
+            <Text style={styles.infoText}>{shopData.address}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Phone size={20} color="#64748b" />
+            <Text style={styles.infoText}>{shopData.phone}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Clock size={20} color="#64748b" />
+            <Text style={styles.infoText}>
+              {shopData.workingHours.days}{'\n'}
+              {shopData.workingHours.open} - {shopData.workingHours.close}
+            </Text>
+          </View>
+        </View>
+
         <View style={styles.statsContainer}>
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <View style={[styles.statIcon, styles.clientsIcon]}>
-                <Users size={20} color="#ffffff" />
-              </View>
-              <Text style={styles.statValue}>24</Text>
-              <Text style={styles.statLabel}>Active Clients</Text>
-            </View>
-            
-            <View style={styles.statCard}>
-              <View style={[styles.statIcon, styles.appointmentsIcon]}>
-                <Calendar size={20} color="#ffffff" />
-              </View>
-              <Text style={styles.statValue}>8</Text>
-              <Text style={styles.statLabel}>Visits This Week</Text>
-            </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{shopData.totalProducts}</Text>
+            <Text style={styles.statLabel}>Products</Text>
           </View>
-          
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <View style={[styles.statIcon, styles.productsIcon]}>
-                <Package size={20} color="#ffffff" />
-              </View>
-              <Text style={styles.statValue}>3</Text>
-              <Text style={styles.statLabel}>Low Stock Items</Text>
-            </View>
-            
-            <View style={styles.statCard}>
-              <View style={[styles.statIcon, styles.salesIcon]}>
-                <DollarSign size={20} color="#ffffff" />
-              </View>
-              <Text style={styles.statValue}>$2,850</Text>
-              <Text style={styles.statLabel}>Sales This Month</Text>
-            </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{shopData.totalOrders}</Text>
+            <Text style={styles.statLabel}>Orders</Text>
           </View>
         </View>
-
-        {/* Upcoming Visits Section */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today's Visits</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <FlatList
-            data={upcomingVisits}
-            renderItem={renderVisitItem}
-            keyExtractor={item => item.id}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-          />
-        </View>
-
-        {/* Low Stock Alert Section */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Low Stock Alerts</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <FlatList
-            data={lowStockItems}
-            renderItem={renderLowStockItem}
-            keyExtractor={item => item.id}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f8fafc',
   },
   header: {
-    padding: 24,
-    backgroundColor: '#15803d',
+    height: 200,
+    position: 'relative',
   },
-  greeting: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+  coverImage: {
+    width: '100%',
+    height: '100%',
   },
-  name: {
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  headerContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+  },
+  shopName: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginTop: 4,
+    marginBottom: 8,
   },
-  statsContainer: {
-    padding: 16,
-    marginTop: -20,
+  ratingContainer: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
   },
-  statsRow: {
+  rating: {
+    fontSize: 14,
+    color: '#eab308',
+    fontWeight: '600',
+  },
+  content: {
+    padding: 20,
+  },
+  actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 24,
   },
-  statCard: {
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  whiteText: {
+    color: '#ffffff',
+  },
+  description: {
+    fontSize: 16,
+    color: '#1f2937',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  infoCard: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 16,
-    width: '48%',
+    marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 2,
   },
-  statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    gap: 12,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1f2937',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  clientsIcon: {
-    backgroundColor: '#2563eb',
-  },
-  appointmentsIcon: {
-    backgroundColor: '#0ea5e9',
-  },
-  productsIcon: {
-    backgroundColor: '#f59e0b',
-  },
-  salesIcon: {
-    backgroundColor: '#10b981',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#1e293b',
+    color: '#1f2937',
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
     color: '#64748b',
-    marginTop: 4,
-  },
-  sectionContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1e293b',
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: '#15803d',
-    fontWeight: '500',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#e5e7eb',
-    marginVertical: 8,
-  },
-  visitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  visitLeftContent: {
-    marginRight: 12,
-  },
-  visitDateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  visitTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  visitDate: {
-    marginLeft: 4,
-    fontSize: 14,
-    color: '#64748b',
-  },
-  visitTime: {
-    marginLeft: 4,
-    fontSize: 14,
-    color: '#64748b',
-  },
-  visitMiddleContent: {
-    flex: 1,
-  },
-  visitClientName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  visitType: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 2,
-  },
-  stockItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  stockInfo: {
-    flex: 1,
-  },
-  stockName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1e293b',
-  },
-  stockQuantity: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 2,
-  },
-  stockQuantityValue: {
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-  stockAlert: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fef2f2',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  stockAlertText: {
-    marginLeft: 4,
-    fontSize: 12,
-    color: '#ef4444',
-    fontWeight: '500',
   },
 });
