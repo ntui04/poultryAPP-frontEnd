@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Pressable, TextInput } from 'react-native';
 import { router } from 'expo-router';
-import { Search, Star, Calendar, Clock } from 'lucide-react-native';
+import { Search, Star, Clock, PlusCircle } from 'lucide-react-native';
 
-export default function Consultants() {
+export default function ConsultantsHome() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const consultants = [
@@ -38,6 +38,18 @@ export default function Consultants() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <Text style={styles.pageTitle}>Veterinary Consultants</Text>
+          <Pressable 
+            style={styles.addConsultantButton}
+            // ADMIN SECTION
+            onPress={() => router.push('/consultants/add')}
+          >
+            <PlusCircle size={24} color="#2563eb" />
+            <Text style={styles.addConsultantText}>Add Consultant</Text>
+          </Pressable>
+        </View>
+
         <View style={styles.searchContainer}>
           <Search size={20} color="#64748b" style={styles.searchIcon} />
           <TextInput
@@ -54,7 +66,7 @@ export default function Consultants() {
           <Pressable
             key={consultant.id}
             style={styles.consultantCard}
-            onPress={() => router.push(`/consultants/${consultant.id}`)}
+            onPress={() => router.push(`/consultants/profile/${consultant.id}`)}
           >
             <View style={styles.cardHeader}>
               <Image source={{ uri: consultant.image }} style={styles.consultantImage} />
@@ -76,8 +88,8 @@ export default function Consultants() {
                   <Text style={styles.infoValue}>{consultant.experience}</Text>
                 </View>
                 <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Consultation Fee</Text>
-                  <Text style={styles.infoValue}>KES {consultant.consultationFee}</Text>
+                  <Text style={styles.infoLabel}>Education</Text>
+                  <Text style={styles.infoValue}>{consultant.education}</Text>
                 </View>
               </View>
 
@@ -86,18 +98,12 @@ export default function Consultants() {
                   <Clock size={16} color="#64748b" />
                   <Text style={styles.nextAvailable}>Next available: {consultant.nextAvailable}</Text>
                 </View>
-                {consultant.isAvailable && (
-                  <Pressable
-                    style={styles.bookButton}
-                    onPress={() => router.push({
-                      pathname: '/consultants/book',
-                      params: { id: consultant.id }
-                    })}
-                  >
-                    <Calendar size={16} color="#ffffff" />
-                    <Text style={styles.bookButtonText}>Book Now</Text>
-                  </Pressable>
-                )}
+                <Pressable
+                  style={styles.viewProfileButton}
+                  onPress={() => router.push(`/consultants/profile/${consultant.id}`)}
+                >
+                  <Text style={styles.viewProfileButtonText}>View Profile</Text>
+                </Pressable>
               </View>
             </View>
           </Pressable>
@@ -113,10 +119,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   header: {
-    padding: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
+    paddingBottom: 16,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  addConsultantButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addConsultantText: {
+    color: '#2563eb',
+    fontSize: 16,
+    fontWeight: '600',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -124,6 +151,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     borderRadius: 8,
     padding: 12,
+    marginHorizontal: 16,
   },
   searchIcon: {
     marginRight: 8,
@@ -223,16 +251,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
   },
-  bookButton: {
+  viewProfileButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#2563eb',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    gap: 8,
   },
-  bookButtonText: {
+  viewProfileButtonText: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',

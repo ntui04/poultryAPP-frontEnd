@@ -1,11 +1,13 @@
 import { Tabs } from 'expo-router';
-import { 
-  Home, 
-  Package2, 
-  Users, 
-  CalendarClock, 
-  BarChart3, 
-  User 
+import {
+  Home,
+  Package2,
+  Users,
+  CalendarClock,
+  BarChart3,
+  User,
+  Newspaper,
+  ChartNoAxesCombined
 } from 'lucide-react-native';
 
 export default function ConsultationTabLayout() {
@@ -33,47 +35,62 @@ export default function ConsultationTabLayout() {
           fontWeight: '500',
           marginBottom: 5,
         },
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <Home size={size + 2} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Home size={size + 2} color={color} />
+          ),
         }}
       />
+
       <Tabs.Screen
-        name="inventory"
+        name="managePost"
         options={{
-          title: 'Inventory',
-          tabBarIcon: ({ color, size }) => <Package2 size={size + 2} color={color} />,
+          title: 'manage post',
+          tabBarIcon: ({ color, size }) => (
+            <Newspaper size={size + 2} color={color} />
+          ),
         }}
       />
+
       <Tabs.Screen
-        name="clients"
+        name="statistics"
         options={{
-          title: 'Clients',
-          tabBarIcon: ({ color, size }) => <Users size={size + 2} color={color} />,
+          title: 'statistics',
+          tabBarIcon: ({ color, size }) => (
+            <ChartNoAxesCombined size={size + 2} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="appointments"
         options={{
           title: 'Visits',
-          tabBarIcon: ({ color, size }) => <CalendarClock size={size + 2} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <CalendarClock size={size + 2} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="analytics"
         options={{
           title: 'Analytics',
-          tabBarIcon: ({ color, size }) => <BarChart3 size={size + 2} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <BarChart3 size={size + 2} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={size + 2} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <User size={size + 2} color={color} />
+          ),
         }}
       />
     </Tabs>
