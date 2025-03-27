@@ -5,24 +5,15 @@ import { useAuthStore } from '@/stores/auth';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
+
 export default function Registration() {
-  const [name, setName] = useState('');
+  const [firstname, setfirstName] = useState('');
+  const [lastname, setlastName] = useState('');
   const [number, setnumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { register, isLoading, error, clearError } = useAuthStore();
 
-  const handleRegistration = async () => {
-    clearError();
-    if (password !== confirmPassword) {
-      // You would need to add handling for password mismatch in your store
-      return;
-    }
-    await register(name, number, password);
-    if (!error) {
-      router.replace('/(tabs)');
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -41,20 +32,22 @@ export default function Registration() {
         {error && <Text style={styles.error}>{error}</Text>}
         
         <Input
-          label="Full Name"
-          value={name}
-          onChangeText={setName}
+          label="first Name"
+          value={firstname}
+          onChangeText={setfirstName}
+          placeholder="Enter your first name"
+        />
+        <Input
+          label="last Name"
+          value={lastname}
+          onChangeText={setlastName}
           placeholder="Enter your full name"
         />
-        
         <Input
           label="number"
           value={number}
           onChangeText={setnumber}
           placeholder="Enter your number"
-          keyboardType="number"
-          autoCapitalize="none"
-          containerStyle={{ marginBottom: 16 }}
         />
         
         <Input
@@ -74,7 +67,7 @@ export default function Registration() {
         />
         
         <Button 
-          onPress={handleRegistration} 
+          onPress={register} 
           loading={isLoading}
         >
           Create Account

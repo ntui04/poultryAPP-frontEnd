@@ -1,19 +1,24 @@
 import { create } from 'zustand';
-import { User } from '@/types';
-import { auth } from '@/lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '@/lib/api';
+
+interface User {
+  id: string;
+  firstname: string;
+  lastname: string;
+  phone_number: string;
+}
 
 interface AuthState {
   user: User | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (phone_number: string, password: string) => Promise<void>;
   register: (data: {
-    name: string;
-    email: string;
+    firstname: string;
+    lastname: string;
+    phone_number: string;
     password: string;
-    role: string;
-    phone?: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -24,16 +29,47 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: false,
   error: null,
 
-  login: async (email, password) => {
+  login: async (phone_number, password) => {
     try {
       set({ isLoading: true, error: null });
-      const response = await auth.login(email, password);
+      
+      // Validate inputs before making API call
+      if (!phone_number || !password) {
+        throw new Error('Phone number and password are required');
+      }
+
+      const response = await api.post('/api/auth/login', { 
+        phone_number, 
+        password 
+      });
+
+      if (!response.data?.token) {
+        throw new Error('Invalid response from server');
+      }
+
       await AsyncStorage.setItem('token', response.data.token);
-      set({ user: response.data.user, isLoading: false });
-    } catch (error) {
-      set({
-        error: error.response?.data?.message || 'Failed to login',
+      set({ 
+        user: response.data.user, 
         isLoading: false,
+        error: null
+      });
+    } catch (error: any) {
+      let errorMessage = 'Failed to login';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        // Handle Laravel validation errors
+        const errors = error.response.data.errors;
+        errorMessage = Object.values(errors).flat().join(', ');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      set({
+        error: errorMessage,
+        isLoading: false,
+        user: null
       });
     }
   },
@@ -41,20 +77,54 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (data) => {
     try {
       set({ isLoading: true, error: null });
-      const response = await auth.register(data);
+
+      // Validate required fields
+      if (!data.firstname || !data.lastname || !data.phone_number || !data.password) {
+        throw new Error('All fields are required');
+      }
+
+      const response = await api.post('/api/auth/register', data);
+
+      if (!response.data?.token) {
+        throw new Error('Invalid response from server');
+      }
+
       await AsyncStorage.setItem('token', response.data.token);
-      set({ user: response.data.user, isLoading: false });
-    } catch (error) {
-      set({
-        error: error.response?.data?.message || 'Failed to register',
+      set({ 
+        user: response.data.user, 
         isLoading: false,
+        error: null
+      });
+    } catch (error: any) {
+      let errorMessage = 'Failed to register';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        // Handle Laravel validation errors
+        const errors = error.response.data.errors;
+        errorMessage = Object.values(errors).flat().join(', ');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      set({
+        error: errorMessage,
+        isLoading: false,
+        user: null
       });
     }
   },
 
   logout: async () => {
-    await AsyncStorage.removeItem('token');
-    set({ user: null });
+    try {
+      await api.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      await AsyncStorage.removeItem('token');
+      set({ user: null, error: null });
+    }
   },
 
   clearError: () => set({ error: null }),

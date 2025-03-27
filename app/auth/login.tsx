@@ -1,233 +1,208 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Link, router } from 'expo-router';
-import { useAuthStore } from '@/stores/auth';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  StyleSheet, 
+  Pressable, 
+  ScrollView, 
+  Alert 
+} from 'react-native';
+import { router } from 'expo-router';
+import AuthService from '../services/authentication';
 
-export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { login, isLoading, error, clearError } = useAuthStore();
+export default function LoginScreen() {
+  const [formData, setFormData] = useState({
+    phone_number: '',
+    password: ''
+  });
 
-  // Default user credentials for demo
-  const defaultUsers = {
-    normal: {
-      email: 'user@example.com',
-      password: 'password123',
-      redirectPath: '/(tabs)', // Regular user tabs
-    },
-    agrovet: {
-      email: 'agrovet@example.com',
-      password: 'password123',
-      redirectPath: '/(vetTabs)', // Agrovet-specific tabs
-    },
-    consultvet: {
-      email: 'consultvet@example.com',
-      password: 'password123',
-      redirectPath: '/(consultTabs)', // Agrovet-specific tabs
-    },
-  };
+  const [errors, setErrors] = useState<{ phone_number?: string; password?: string }>({});
 
   const handleLogin = async () => {
-    clearError();
-    const result = await login(email, password);
-  
-    if (!error && result) {
-      // Determine redirect based on user role
-      switch (result.userType) {
-        case 'agrovet':
-          router.replace('/vetTabs');
-          break;
-        case 'consultvet':
-          router.replace('/consultTabs');
-          break;
-        default: // Normal user
-          router.replace('/(tabs)');
-          break;
+    try {
+      // Basic validation
+      const newErrors = {};
+      if (!formData.phone_number) newErrors.phone_number = 'Phone number is required';
+      if (!formData.password) newErrors.password = 'Password is required';
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
       }
+
+      // Attempt login
+      const response = await AuthService.login(formData);
+
+      if (response && response.userType) {
+        // Redirect based on user role
+        if (response.userType === 'agrovet') {
+          router.replace('/(vetTabs)');
+        } else if (response.userType === 'consultvet') {
+          router.replace('/(consultTabs)');
+        } else {
+          router.replace('/(tabs)'); // Default route
+        }
+      } else {
+        throw new Error('Invalid login response');
+      }
+    } catch (error) {
+      // Handle login errors
+      Alert.alert('Login Failed', error instanceof Error ? error.message : 'An unknown error occurred');
     }
-  };
-  
-
-  const loginAsDefaultUser = (userType) => {
-    const userData = defaultUsers[userType];
-    setEmail(userData.email);
-    setPassword(userData.password);
-
-    // Auto-login with specific redirect
-    clearError();
-    login(userData.email, userData.password).then((result) => {
-      if (!error) {
-        router.replace(userData.redirectPath);
-      }
-    });
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Image
-          source={require('../../assets/images/kuku.jpg')}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        />
-        <View style={styles.overlay} />
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue to Poultry Pro</Text>
-      </View>
+    <ScrollView 
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={styles.title}>Welcome Back</Text>
+      <Text style={styles.subtitle}>Login to your account</Text>
 
-      <View style={styles.form}>
-        {error && <Text style={styles.error}>{error}</Text>}
-
-        <Input
-          label="Email Address"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Enter your email"
-          keyboardType="email-address"
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Phone Number</Text>
+        <TextInput
+          style={[
+            styles.input, 
+            errors.phone_number && styles.inputError
+          ]}
+          placeholder="Enter your phone number"
+          keyboardType="phone-pad"
           autoCapitalize="none"
-          containerStyle={{ marginBottom: 16 }}
+          value={formData.phone_number}
+          onChangeText={(text) => {
+            setFormData({...formData, phone_number: text});
+            if (errors.phone_number) {
+              const newErrors = {...errors};
+              delete newErrors.phone_number;
+              setErrors(newErrors);
+            }
+          }}
         />
-
-        <View style={{ marginBottom: 24 }}>
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Enter your password"
-            secureTextEntry
-          />
-        </View>
-
-        <Button onPress={handleLogin} loading={isLoading}>
-          Sign In
-        </Button>
-
-        <View style={styles.links}>
-          <Link href="/(auth)/register" style={styles.link}>
-            Create an account
-          </Link>
-          <Link href="/(auth)/forgot-password" style={styles.link}>
-            Forgot password?
-          </Link>
-        </View>
-
-        {/* Demo User Selection */}
-        <View style={styles.demoContainer}>
-          <Text style={styles.demoTitle}>Demo Login Options</Text>
-          <View style={styles.demoButtons}>
-            <TouchableOpacity
-              style={styles.demoButton}
-              onPress={() => loginAsDefaultUser('normal')}
-            >
-              <Text style={styles.demoButtonText}>Login as User</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.demoButton, styles.demoButtonAgrovet]}
-              onPress={() => loginAsDefaultUser('agrovet')}
-            >
-              <Text style={styles.demoButtonText}>Login as Agrovet</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.demoButton, styles.demoButtonAgrovetc]}
-              onPress={() => loginAsDefaultUser('consultvet')}
-            >
-              <Text style={styles.demoButtonText}>Login as Vet-officer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        {errors.phone_number && <Text style={styles.errorText}>{errors.phone_number}</Text>}
       </View>
-    </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          style={[
+            styles.input, 
+            errors.password && styles.inputError
+          ]}
+          placeholder="Enter your password"
+          secureTextEntry
+          value={formData.password}
+          onChangeText={(text) => {
+            setFormData({...formData, password: text});
+            if (errors.password) {
+              const newErrors = {...errors};
+              delete newErrors.password;
+              setErrors(newErrors);
+            }
+          }}
+        />
+        {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+      </View>
+
+      <Pressable style={styles.forgotPasswordLink}>
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+      </Pressable>
+
+      <Pressable 
+        style={styles.loginButton}
+        onPress={handleLogin}
+      >
+        <Text style={styles.loginButtonText}>Login</Text>
+      </Pressable>
+
+      <View style={styles.registerLink}>
+        <Text style={styles.registerLinkText}>
+          Don't have an account? 
+        </Text>
+        <Pressable onPress={() => router.push('/auth/register')}>
+          <Text style={styles.registerLinkAction}>Register</Text>
+        </Pressable>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    height: 300,
-    justifyContent: 'flex-end',
-    padding: 24,
-  },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: 300,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    flexGrow: 1,
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 16,
+    paddingVertical: 32,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1f2937',
+    textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#fff',
-    opacity: 0.8,
-  },
-  form: {
-    flex: 1,
-    padding: 24,
-    marginTop: -24,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  error: {
-    color: '#ef4444',
-    marginBottom: 16,
-  },
-  links: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
-  link: {
-    color: '#2563eb',
-    fontSize: 14,
-  },
-  demoContainer: {
-    marginTop: 40,
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
-  },
-  demoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 16,
     color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 24,
   },
-  demoButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  formGroup: {
+    marginBottom: 16,
   },
-  demoButton: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  label: {
+    fontSize: 14,
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     borderRadius: 8,
-    flex: 1,
-    marginHorizontal: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+  },
+  inputError: {
+    borderColor: '#ef4444',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  forgotPasswordLink: {
+    alignSelf: 'flex-end',
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    color: '#2563eb',
+  },
+  loginButton: {
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: 'center',
   },
-  demoButtonAgrovet: {
-    backgroundColor: '#15803d', // Different color for agrovet
-  },
-  demoButtonAgrovetc: {
-    backgroundColor: 'orange', // Different color for agrovet
-  },
-  demoButtonText: {
+  loginButtonText: {
     color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
+  },
+  registerLink: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  registerLinkText: {
+    color: '#64748b',
+  },
+  registerLinkAction: {
+    color: '#2563eb',
+    fontWeight: '600',
+    marginLeft: 4,
   },
 });
