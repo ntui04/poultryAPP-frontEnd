@@ -25,29 +25,34 @@ import {
   Users,
   ShoppingBag
 } from 'lucide-react-native';
+import AuthService from '../services/authentication';
 
 const Profile = () => {
   const { user, logout } = useAuthStore();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
-  const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Logout", 
-          onPress: () => {
-            logout();
-            router.replace('/');
-          },
-          style: "destructive"
-        }
-      ]
-    );
-  };
-
+  const handleLogout = async () => {
+      Alert.alert(
+        "Logout",
+        "Are you sure you want to logout?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Logout", 
+            onPress: async () => {
+              const success = await AuthService.logout();
+              if (success) {
+                logout(); // Update store state
+                router.replace('/auth/login'); // Redirect to login or home
+              } else {
+                Alert.alert("Error", "Failed to logout. Try again.");
+              }
+            },
+            style: "destructive"
+          }
+        ]
+      );
+    };
   const profileOptions = [
     {
       id: 'personal',
@@ -71,7 +76,7 @@ const Profile = () => {
       id: 'security',
       title: 'Security Settings',
       icon: <Lock size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/security'),
+      onPress: () => router.push('/'),
     }
   ];
 
@@ -80,13 +85,13 @@ const Profile = () => {
       id: 'orders',
       title: 'My Orders',
       icon: <ShoppingBag size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/orders'),
+      onPress: () => router.push('/'),
     },
     {
       id: 'payments',
       title: 'Payment Methods',
       icon: <CreditCard size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/payment-methods'),
+      onPress: () => router.push('/'),
     },
     {
       id: 'notifications',
@@ -104,19 +109,19 @@ const Profile = () => {
       id: 'help',
       title: 'Help Center',
       icon: <HelpCircle size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/help'),
+      onPress: () => router.push('/'),
     },
     {
       id: 'terms',
       title: 'Terms & Conditions',
       icon: <FileText size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/terms'),
+      onPress: () => router.push('/'),
     },
     {
       id: 'privacy',
       title: 'Privacy Policy',
       icon: <FileText size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/privacy'),
+      onPress: () => router.push('/'),
     }
   ];
 
@@ -168,7 +173,7 @@ const Profile = () => {
         
         <Pressable 
           style={styles.editProfileButton}
-          onPress={() => router.push('/profile/edit')}
+          onPress={() => router.push('/')}
         >
           <Text style={styles.editProfileText}>Edit Profile</Text>
         </Pressable>

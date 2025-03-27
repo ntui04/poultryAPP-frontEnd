@@ -37,25 +37,28 @@ class AuthService {
   }
 
   // Logout user
+  
+  
+
   async logout() {
     try {
-      // Call backend logout endpoint
-      await axios.post(
-        `${API_BASE_URL}/logout`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${await this.getToken()}`,
-          },
-        }
-      );
+      const token = await AsyncStorage.getItem('authToken'); // Get stored token
+      if (!token) throw new Error("No token found");
 
-      // Clear stored auth data
-      await this.clearAuthData();
+      await axios.post(`${API_BASE_URL}/logout`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      await AsyncStorage.removeItem('authToken'); // Remove token from storage
+
+      return true; // Successfully logged out
     } catch (error) {
-      throw this.handleError(error);
+      console.error("Logout Error:", error);
+      return false; // Failed to logout
     }
   }
+  
+  
 
   // Register Agro Vet Shop
   async registerShop(shopData) {
