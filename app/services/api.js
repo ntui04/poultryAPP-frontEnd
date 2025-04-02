@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://192.168.56.1:8000/api', // Replace with your Laravel server IP
+  baseURL: 'http://192.168.96.32/api', // Replace with your Laravel server IP
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

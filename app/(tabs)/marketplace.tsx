@@ -1,87 +1,91 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, TextInput } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, RefreshControl, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { Search, Filter } from 'lucide-react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Marketplace() {
-  const [searchQuery, setSearchQuery] = useState('');
+export default function ShopProfile() {
+  const [refreshing, setRefreshing] = useState(false);
+  const [shopData, setShopData] = useState([]); // Initialize as an empty array
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    { id: '1', name: 'Feed', icon: '🌾' },
-    { id: '2', name: 'Medicine', icon: '💊' },
-    { id: '3', name: 'Equipment', icon: '🔧' },
-    { id: '4', name: 'Chicks', icon: '🐥' },
-  ];
+  useEffect(() => {
+    fetchShopData();
+  }, []);
 
-  const products = [
-    {
-      id: '1',
-      name: 'Layer Feed Premium',
-      price: 2500,
-      image: 'https://images.unsplash.com/photo-1620574387735-3624d75b2dbc',
-      shop: 'Farm Supply Co.',
-      rating: 4.8,
-    },
-    {
-      id: '2',
-      name: 'Automatic Feeder',
-      price: 5000,
-      image: 'https://images.unsplash.com/photo-1595508064774-5ff825ff0f81',
-      shop: 'Poultry Essentials',
-      rating: 4.6,
-    },
-  ];
+  const fetchShopData = async () => {
+    setLoading(true);
+    try {
+      // Retrieve the token from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken');
+      console.log("Retrieved Token:", token);
+
+      if (!token) {
+        console.error('No token found');
+        setLoading(false);
+        return;
+      }
+
+      // Set up the Authorization header
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      console.log("Request Headers:", headers);
+
+      // Make the API request
+      const response = await axios.get('http://192.168.118.32:8000/api/pataprod', { headers });
+
+      console.log("API Response:", response.data);
+
+      // Update state with the fetched data
+      setShopData(response.data);
+    } catch (error) {
+      console.error('Error fetching shop data:');
+      if (error.response) {
+        console.error('Response Status:', error.response.status);
+        console.error('Response Data:', error.response.data);
+      } else {
+        console.error('Error Message:', error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchShopData();
+    setRefreshing(false);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.searchContainer}>
-          <Search size={20} color="#64748b" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search products..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+    <ScrollView
+      style={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
+      {shopData.length > 0 ? (
+        shopData.map((product) => (
+          <View key={product.id} style={styles.productCard}>
+            {/* <Image source={{ uri: product.image }} style={styles.image} /> */}
+            <Text style={styles.productname}>{product.product_name}</Text>
+            <Text style={styles.productPrice}>${product.price}</Text>
+            {/* Add other product details as needed */}
+          </View>
+        ))
+      ) : (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>No products available.</Text>
         </View>
-        <Pressable style={styles.filterButton}>
-          <Filter size={20} color="#1f2937" />
-        </Pressable>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categories}>
-        {categories.map((category) => (
-          <Pressable
-            key={category.id}
-            style={styles.categoryButton}
-            onPress={() => router.push(`/category/${category.id}`)}>
-            <Text style={styles.categoryIcon}>{category.icon}</Text>
-            <Text style={styles.categoryName}>{category.name}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      <View style={styles.productsGrid}>
-        {products.map((product) => (
-          <Pressable
-            key={product.id}
-            style={styles.productCard}
-            onPress={() => router.push(`/product/${product.id}`)}>
-            <Image source={{ uri: product.image }} style={styles.productImage} />
-            <View style={styles.productInfo}>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productShop}>{product.shop}</Text>
-              <View style={styles.productMeta}>
-                <Text style={styles.productPrice}>KES {product.price}</Text>
-                <Text style={styles.productRating}>★ {product.rating}</Text>
-              </View>
-            </View>
-          </Pressable>
-        ))}
-      </View>
+      )}
     </ScrollView>
   );
 }
@@ -90,103 +94,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
-    marginTop: 10
   },
-  searchContainer: {
-    marginTop: 15,
-    
+  loadingContainer: {
     flex: 1,
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
-    padding: 8,
-    marginRight: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1f2937',
-  },
-  filterButton: {
-    padding: 8,
-  },
-  categories: {
-    padding: 16,
-    marginTop: 15,
-
-  },
-  categoryButton: {
-    alignItems: 'center',
-    marginRight: 24,
-  },
-  categoryIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  categoryName: {
-    fontSize: 14,
-    color: '#1f2937',
-  },
-  productsGrid: {
-    padding: 16,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
   },
   productCard: {
-    width: '48%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   productImage: {
-    width: '100%',
-    height: 150,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 16,
   },
-  productInfo: {
-    padding: 12,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: '500',
+  productname: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#1f2937',
-  },
-  productShop: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 2,
-  },
-  productMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
   },
   productPrice: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#2563eb',
+    color: '#64748b',
   },
-  productRating: {
-    fontSize: 14,
-    color: '#eab308',
-    fontWeight: '500',
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    color: '#64748b',
   },
 });

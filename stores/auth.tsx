@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/lib/api';
 
 interface User {
+  profileImage: string | undefined;
   id: string;
   firstname: string;
   lastname: string;
@@ -83,7 +84,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('All fields are required');
       }
 
-      const response = await api.post('/api/auth/register', data);
+      const response = await api.post('/api/register', data);
 
       if (!response.data?.token) {
         throw new Error('Invalid response from server');

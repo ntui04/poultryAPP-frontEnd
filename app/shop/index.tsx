@@ -1,33 +1,53 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, RefreshControl } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { MapPin, Clock, Phone, CreditCard as Edit2, Plus, Package } from 'lucide-react-native';
+import { MapPin, Clock, Phone, CreditCard as Edit2, Package } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
+import axios from 'axios'; // Import axios
 
 export default function ShopProfile() {
   const [refreshing, setRefreshing] = useState(false);
-  
-  const shopData = {
-    name: "Farm Supply Co.",
-    description: "Your one-stop shop for all poultry farming needs. We offer a wide range of quality products including feeds, medicines, equipment, and more.",
-    address: "123 Farmers Lane, Nairobi",
-    phone: "+254 712 345 678",
-    workingHours: {
-      open: "8:00 AM",
-      close: "6:00 PM",
-      days: "Monday - Saturday"
-    },
-    image: "https://images.unsplash.com/photo-1516594798947-e65505dbb29d",
-    rating: 4.8,
-    totalProducts: 45,
-    totalOrders: 128
+  const [shopData, setShopData] = useState(null);
+  const [loading, setLoading] = useState(true); // Add loading state
+
+  useEffect(() => {
+    fetchShopData();
+  }, []);
+
+  const fetchShopData = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://192.168.96.32:8000/api/products'); // Replace with your backend endpoint
+      setShopData(response.data);
+    } catch (error) {
+      console.error('Error fetching shop data:', error);
+      // Handle error appropriately (e.g., show an error message)
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Implement refresh logic here
-    setTimeout(() => setRefreshing(false), 1000);
+    await fetchShopData();
+    setRefreshing(false);
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (!shopData) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Failed to load shop data.</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView 
@@ -107,119 +127,10 @@ export default function ShopProfile() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  // ... (your styles)
+  loadingContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  header: {
-    height: 200,
-    position: 'relative',
-  },
-  coverImage: {
-    width: '100%',
-    height: '100%',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  headerContent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-  },
-  shopName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 8,
-  },
-  ratingContainer: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-  },
-  rating: {
-    fontSize: 14,
-    color: '#eab308',
-    fontWeight: '600',
-  },
-  content: {
-    padding: 20,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  buttonContent: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  whiteText: {
-    color: '#ffffff',
-  },
-  description: {
-    fontSize: 16,
-    color: '#1f2937',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  infoCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-    gap: 12,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1f2937',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#64748b',
   },
 });

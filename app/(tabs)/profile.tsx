@@ -32,27 +32,31 @@ const Profile = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
   const handleLogout = async () => {
-      Alert.alert(
-        "Logout",
-        "Are you sure you want to logout?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { 
-            text: "Logout", 
-            onPress: async () => {
-              const success = await AuthService.logout();
-              if (success) {
-                logout(); // Update store state
-                router.replace('/auth/login'); // Redirect to login or home
-              } else {
-                Alert.alert("Error", "Failed to logout. Try again.");
-              }
-            },
-            style: "destructive"
-          }
-        ]
-      );
-    };
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          onPress: async () => {
+            try {
+              await logout(); // Clear local state first
+              const success = await AuthService.logout(); // Now properly awaited
+              
+              // This will always redirect, but you could add logic if needed
+              router.replace('/auth/login');
+              
+            } catch (error) {
+              console.error("Logout error:", error);
+              router.replace('/auth/login');
+            }
+          },
+          style: "destructive"
+        }
+      ]
+    );
+  };
   const profileOptions = [
     {
       id: 'personal',
@@ -168,12 +172,12 @@ const Profile = () => {
           )}
         </View>
         
-        <Text style={styles.userName}>{user?.name || 'Hazey Dotcom'}</Text>
-        <Text style={styles.userEmail}>{user?.email || 'hazey@costa.com'}</Text>
+        <Text style={styles.userName}>{user?.firstname || ''}  {user?.lastname}</Text>
+        <Text style={styles.userEmail}>{user?.phone_number}</Text>
         
         <Pressable 
           style={styles.editProfileButton}
-          onPress={() => router.push('/')}
+          onPress={() => router.push('../userprofile/')}
         >
           <Text style={styles.editProfileText}>Edit Profile</Text>
         </Pressable>
@@ -255,13 +259,13 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
   userName: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 4,
   },
   userEmail: {
-    fontSize: 16,
+    fontSize: 20,
     color: '#64748b',
     marginBottom: 16,
   },

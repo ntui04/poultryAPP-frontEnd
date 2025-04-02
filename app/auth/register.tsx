@@ -1,137 +1,124 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { Link, router } from 'expo-router';
-import { useAuthStore } from '@/stores/auth';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import AuthService from '../services/authentication'; // Ensure correct import
 
+const RegisterScreen = () => {
+  const [form, setForm] = useState({
+    first_name: '',
+    last_name: '',
+    phone_number: '',
+    password: '',
+    role: 'farmer',
+  });
 
-export default function Registration() {
-  const [firstname, setfirstName] = useState('');
-  const [lastname, setlastName] = useState('');
-  const [number, setnumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const { register, isLoading, error, clearError } = useAuthStore();
+  const [errors, setErrors] = useState<{ general?: string; first_name?: string; last_name?: string; phone_number?: string; password?: string }>({});
 
+  const handleSubmit = async () => {
+    try {
+      // Clear previous errors
+      setErrors({});
+
+      // Client-side validation
+      if (!form.first_name || !form.last_name || !form.phone_number || !form.password) {
+        setErrors({ general: 'Please fill all fields' });
+        return;
+      }
+
+      const result = await AuthService.register(form);
+      Alert.alert('Success', 'Account created successfully!');
+    } catch (error) {
+      console.log('Full error:', error);
+      
+      if (error instanceof Object && 'errors' in error) {
+        if (typeof error.errors === 'object' && error.errors !== null) {
+          setErrors(error.errors as Record<string, string>);
+        }
+      } else {
+        Alert.alert(
+          'Registration Error', 
+          error.message || 'An unknown error occurred'
+        );
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Image
-          source={require('@/assets/images/icon.png')}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        />
-        <View style={styles.overlay} />
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Sign up to start using Poultry Pro</Text>
-      </View>
-      
-      <View style={styles.form}>
-        {error && <Text style={styles.error}>{error}</Text>}
-        
-        <Input
-          label="first Name"
-          value={firstname}
-          onChangeText={setfirstName}
-          placeholder="Enter your first name"
-        />
-        <Input
-          label="last Name"
-          value={lastname}
-          onChangeText={setlastName}
-          placeholder="Enter your full name"
-        />
-        <Input
-          label="number"
-          value={number}
-          onChangeText={setnumber}
-          placeholder="Enter your number"
-        />
-        
-        <Input
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Create a password"
-          secureTextEntry
-        />
-        
-        <Input
-          label="Confirm Password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          placeholder="Confirm your password"
-          secureTextEntry
-        />
-        
-        <Button 
-          onPress={register} 
-          loading={isLoading}
-        >
-          Create Account
-        </Button>
-        
-        <View style={styles.links}>
-          <Link href="/auth/login" style={styles.link}>
-            Already have an account? Sign in
-          </Link>
-        </View>
-      </View>
+      <Text style={styles.header}>Register</Text>
+
+      {errors.general && <Text style={styles.errorText}>{errors.general}</Text>}
+
+      <TextInput
+        style={[styles.input, errors.first_name && styles.inputError]}
+        placeholder="First Name"
+        value={form.first_name}
+        onChangeText={(text) => setForm({ ...form, first_name: text })}
+      />
+      {errors.first_name && <Text style={styles.errorText}>{errors.first_name}</Text>}
+
+      <TextInput
+        style={[styles.input, errors.last_name && styles.inputError]}
+        placeholder="Last Name"
+        value={form.last_name}
+        onChangeText={(text) => setForm({ ...form, last_name: text })}
+      />
+      {errors.last_name && <Text style={styles.errorText}>{errors.last_name}</Text>}
+
+      <TextInput
+        style={[styles.input, errors.phone_number && styles.inputError]}
+        placeholder="Phone Number"
+        keyboardType="phone-pad"
+        value={form.phone_number}
+        onChangeText={(text) => setForm({ ...form, phone_number: text })}
+      />
+      {errors.phone_number && <Text style={styles.errorText}>{errors.phone_number}</Text>}
+
+      <TextInput
+        style={[styles.input, errors.password && styles.inputError]}
+        placeholder="Password"
+        secureTextEntry
+        value={form.password}
+        onChangeText={(text) => setForm({ ...form, password: text })}
+      />
+      {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+
+      <Button title="Register" onPress={handleSubmit} color="#28a745" />
     </View>
   );
-}
+};
 
+// 🌟 Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#f8f9fa',
   },
   header: {
-    height: 300,
-    justifyContent: 'flex-end',
-    padding: 24,
-  },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: 300,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#333',
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#fff',
-    opacity: 0.8,
-  },
-  form: {
-    flex: 1,
-    padding: 24,
-    marginTop: -24,
+  input: {
+    height: 50,
+    borderColor: '#ced4da',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 10,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
   },
-  error: {
-    color: '#ef4444',
-    marginBottom: 16,
+  inputError: {
+    borderColor: '#dc3545', // Red border for errors
   },
-  links: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  link: {
-    color: '#2563eb',
-    fontSize: 14,
+  errorText: {
+    color: '#dc3545',
+    fontSize: 12,
+    marginBottom: 10,
   },
 });
+
+export default RegisterScreen;

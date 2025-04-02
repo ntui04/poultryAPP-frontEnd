@@ -1,8 +1,24 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, RefreshControl, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Pressable,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/auth';
-import { Bell, MapPin, TrendingUp, ThermometerSun, Users, Calendar } from 'lucide-react-native';
+import {
+  Bell,
+  MapPin,
+  TrendingUp,
+  ThermometerSun,
+  Users,
+  Calendar,
+} from 'lucide-react-native';
 
 export default function Home() {
   const { user } = useAuthStore();
@@ -45,7 +61,7 @@ export default function Home() {
   };
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -54,13 +70,16 @@ export default function Home() {
       {/* Header Section */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Welcome back, {user?.name}</Text>
+          <Text style={styles.greeting}>
+            {user?.lastname ? `Welcome back, ${user.lastname}` : 'Welcome back!'} {user?.firstname}
+          </Text>
+
           <View style={styles.location}>
             <MapPin size={16} color="#64748b" />
-            <Text style={styles.locationText}>Nairobi, Kenya</Text>
+            <Text style={styles.locationText}>Mbeya, Tanzania</Text>
           </View>
         </View>
-        <Pressable 
+        <Pressable
           style={styles.notificationButton}
           // onPress={() => router.push('/notifications')}
         >
@@ -68,14 +87,12 @@ export default function Home() {
           <View style={styles.notificationBadge} />
         </Pressable>
 
-
-          {/* <TouchableOpacity
+        {/* <TouchableOpacity
             style={styles.notificationButton}
             onPress={() => router.push('/(tabs)/profile/profile')}
             >
               profile
             </TouchableOpacity> */}
-        
       </View>
 
       {/* Weather Card */}
@@ -87,7 +104,9 @@ export default function Home() {
             <Text style={styles.weatherDesc}>{weatherInfo.condition}</Text>
           </View>
         </View>
-        <Text style={styles.weatherHumidity}>Humidity: {weatherInfo.humidity}%</Text>
+        <Text style={styles.weatherHumidity}>
+          Humidity: {weatherInfo.humidity}%
+        </Text>
       </View>
 
       {/* Farm Statistics */}
@@ -134,7 +153,6 @@ export default function Home() {
           </Pressable>
         ))}
       </View>
-
     </ScrollView>
   );
 }
