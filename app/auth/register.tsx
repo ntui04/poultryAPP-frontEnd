@@ -1,124 +1,241 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import AuthService from '../services/authentication'; // Ensure correct import
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+import { Link, router } from 'expo-router';
+import { useAuthStore } from '@/stores/auth';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { User, Phone, Lock } from 'lucide-react-native';
 
-const RegisterScreen = () => {
-  const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
+export default function Register() {
+  const [formData, setFormData] = useState({
+    firstname: '',
+    lastname: '',
     phone_number: '',
+    location: '',
     password: '',
-    role: 'farmer',
+    password_confirmation: '',
   });
 
-  const [errors, setErrors] = useState<{ general?: string; first_name?: string; last_name?: string; phone_number?: string; password?: string }>({});
+  const { register, isLoading, error, clearError } = useAuthStore();
 
-  const handleSubmit = async () => {
-    try {
-      // Clear previous errors
-      setErrors({});
+  const isFormValid = () => {
+    return (
+      formData.firstname.length > 0 &&
+      formData.lastname.length > 0 &&
+      formData.phone_number.length > 0 &&
+      formData.password.length >= 6
+    );
+  };
 
-      // Client-side validation
-      if (!form.first_name || !form.last_name || !form.phone_number || !form.password) {
-        setErrors({ general: 'Please fill all fields' });
-        return;
-      }
-
-      const result = await AuthService.register(form);
-      Alert.alert('Success', 'Account created successfully!');
-    } catch (error) {
-      console.log('Full error:', error);
-      
-      if (error instanceof Object && 'errors' in error) {
-        if (typeof error.errors === 'object' && error.errors !== null) {
-          setErrors(error.errors as Record<string, string>);
-        }
-      } else {
-        Alert.alert(
-          'Registration Error', 
-          error.message || 'An unknown error occurred'
-        );
-      }
+  const handleRegister = async () => {
+    clearError();
+    const dataToSend = {
+      firstname: formData.firstname,
+      lastname: formData.lastname,
+      phone_number: formData.phone_number,
+      location: formData.location,
+      password: formData.password,
+      password_confirmation: formData.password_confirmation,
+      role: 'farmer'
+    };
+    const success = await register(dataToSend);
+    if (success) {
+      router.replace('/');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Register</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.header}>
+          <Image
+            source={{
+              uri: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c',
+            }}
+            style={styles.backgroundImage}
+          />
+          <View style={styles.overlay} />
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join Poultry Pro today</Text>
+        </View>
 
-      {errors.general && <Text style={styles.errorText}>{errors.general}</Text>}
+        <View style={styles.form}>
+          {error && <Text style={styles.error}>{error}</Text>}
 
-      <TextInput
-        style={[styles.input, errors.first_name && styles.inputError]}
-        placeholder="First Name"
-        value={form.first_name}
-        onChangeText={(text) => setForm({ ...form, first_name: text })}
-      />
-      {errors.first_name && <Text style={styles.errorText}>{errors.first_name}</Text>}
+          <View style={styles.inputContainer}>
+            <User size={20} color="#64748b" style={styles.inputIcon} />
+            <Input
+              label="First Name"
+              value={formData.firstname}
+              onChangeText={(text) =>
+                setFormData({ ...formData, firstname: text })
+              }
+              placeholder="Enter your first name"
+            />
+          </View>
 
-      <TextInput
-        style={[styles.input, errors.last_name && styles.inputError]}
-        placeholder="Last Name"
-        value={form.last_name}
-        onChangeText={(text) => setForm({ ...form, last_name: text })}
-      />
-      {errors.last_name && <Text style={styles.errorText}>{errors.last_name}</Text>}
+          <View style={styles.inputContainer}>
+            <User size={20} color="#64748b" style={styles.inputIcon} />
+            <Input
+              label="Last Name"
+              value={formData.lastname}
+              onChangeText={(text) =>
+                setFormData({ ...formData, lastname: text })
+              }
+              placeholder="Enter your last name"
+            />
+          </View>
 
-      <TextInput
-        style={[styles.input, errors.phone_number && styles.inputError]}
-        placeholder="Phone Number"
-        keyboardType="phone-pad"
-        value={form.phone_number}
-        onChangeText={(text) => setForm({ ...form, phone_number: text })}
-      />
-      {errors.phone_number && <Text style={styles.errorText}>{errors.phone_number}</Text>}
+          <View style={styles.inputContainer}>
+            <Phone size={20} color="#64748b" style={styles.inputIcon} />
+            <Input
+              label="Phone number"
+              value={formData.phone_number}
+              onChangeText={(text) =>
+                setFormData({ ...formData, phone_number: text })
+              }
+              placeholder="Enter your phone number"
+            />
+          </View>
 
-      <TextInput
-        style={[styles.input, errors.password && styles.inputError]}
-        placeholder="Password"
-        secureTextEntry
-        value={form.password}
-        onChangeText={(text) => setForm({ ...form, password: text })}
-      />
-      {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+          <View style={styles.inputContainer}>
+            <Phone size={20} color="#64748b" style={styles.inputIcon} />
+            <Input
+              label="location"
+              value={formData.location}
+              onChangeText={(text) =>
+                setFormData({ ...formData, location: text })
+              }
+              placeholder="Enter your location"
+            />
+          </View>
 
-      <Button title="Register" onPress={handleSubmit} color="#28a745" />
-    </View>
+          <View style={styles.inputContainer}>
+            <Lock size={20} color="#64748b" style={styles.inputIcon} />
+            <Input
+              label="Password"
+              value={formData.password}
+              onChangeText={(text) =>
+                setFormData({ ...formData, password: text })
+              }
+              placeholder="Create a password (min. 6 characters)"
+              secureTextEntry
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Lock size={20} color="#64748b" style={styles.inputIcon} />
+            <Input
+              label="Confirm Password"
+              value={formData.password_confirmation}
+              onChangeText={(text) =>
+                setFormData({ ...formData, password_confirmation: text })
+              }
+              placeholder="Confirm your password"
+              secureTextEntry
+            />
+          </View>
+
+          <Button
+            onPress={handleRegister}
+            loading={isLoading}
+            disabled={!isFormValid()}
+          >
+            Create Account
+          </Button>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Already have an account?</Text>
+            <Link href="/login" style={styles.link}>
+              Sign In
+            </Link>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
-};
+}
 
-// 🌟 Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#333',
-  },
-  input: {
-    height: 50,
-    borderColor: '#ced4da',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 10,
     backgroundColor: '#fff',
   },
-  inputError: {
-    borderColor: '#dc3545', // Red border for errors
+  scrollView: {
+    flex: 1,
   },
-  errorText: {
-    color: '#dc3545',
-    fontSize: 12,
-    marginBottom: 10,
+  header: {
+    height: 300,
+    justifyContent: 'flex-end',
+    padding: 24,
+  },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: 300,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#fff',
+    opacity: 0.8,
+  },
+  form: {
+    flex: 1,
+    padding: 24,
+    marginTop: -24,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  inputContainer: {
+    marginBottom: 16,
+    position: 'relative',
+  },
+  inputIcon: {
+    position: 'absolute',
+    top: 40,
+    left: 12,
+    zIndex: 1,
+  },
+  error: {
+    color: '#ef4444',
+    marginBottom: 16,
+  },
+  footer: {
+    marginTop: 24,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  footerText: {
+    color: '#64748b',
+    fontSize: 14,
+  },
+  link: {
+    color: '#2563eb',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
-
-export default RegisterScreen;
