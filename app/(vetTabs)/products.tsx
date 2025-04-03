@@ -1,32 +1,66 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Pressable, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { Search, Plus, CreditCard as Edit2, Trash2 } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
+import apiz from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { shopData } from '@/utils/datatype';
+import { Path } from 'react-native-svg';
 
 export default function Products() {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const products = [
-    {
-      id: '1',
-      name: 'Layer Feed Premium',
-      price: 2500,
-      stock: 150,
-      category: 'Feed',
-      image: 'https://images.unsplash.com/photo-1620574387735-3624d75b2dbc',
-    },
-    {
-      id: '2',
-      name: 'Automatic Feeder',
-      price: 5000,
-      stock: 25,
-      category: 'Equipment',
-      image: 'https://images.unsplash.com/photo-1595508064774-5ff825ff0f81',
-    },
-  ];
+    const [refreshing, setRefreshing] = useState(false);
+    const [shopData, setShopData] = useState<shopData[]>([]); // Initialize as an empty array
+    const [loading, setLoading] = useState(true);
+    const [token, setToken] = useState(null);
 
-  const handleDelete = (productId: string) => {
+
+    const mediaUrl = 'http://192.168.239.32:8000/storage/';
+    useEffect(() => {
+      const fetchToken = async () => {
+        try {
+          const storedToken = await AsyncStorage.getItem('token');
+          if (storedToken) {
+            setToken(storedToken);
+          } else {
+            console.error('No token found in AsyncStorage');
+          }
+        } catch (error) {
+          console.error('Error fetching token from AsyncStorage:', error);
+        }
+      };
+  
+      fetchToken();
+    }, []);
+  
+    useEffect(() => {
+      const fetchShopData = async () => {
+        setLoading(true);
+        try {
+          const response = await apiz.get('/products/farm',{
+            headers:{Authorization: `Bearer ${token}`}
+          })
+    
+          console.log("API Response:", response.data);
+    
+          // Update state with the fetched data
+          setShopData(response.data);
+        } catch (error) {
+          console.error('Error fetching shop data:', error.response?.data || error.message);
+          setLoading(false);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchShopData();
+    }, [token]);
+  
+    
+              
+
+  const handleDelete = (productId: number) => {
     // Implement delete logic
     console.log('Delete product:', productId);
   };
@@ -43,7 +77,7 @@ export default function Products() {
             onChangeText={setSearchQuery}
           />
         </View>
-        <Button onPress={() => router.push('/shop/add-products')}>
+        <Button onPress={() => router.push({pathname: '/shop/add-products', params: {token:token}})}>
           <View style={styles.buttonContent}>
             <Plus size={20} color="#ffffff" />
             <Text style={styles.buttonText}>Add Product</Text>
@@ -52,14 +86,14 @@ export default function Products() {
       </View>
 
       <ScrollView style={styles.productList}>
-        {products.map((product) => (
+        {shopData.map((product) => (
           <View key={product.id} style={styles.productCard}>
-            <Image source={{ uri: product.image }} style={styles.productImage} />
+            <Image source={{ uri:mediaUrl + product.image }} style={styles.productImage} />
             <View style={styles.productInfo}>
               <View style={styles.productHeader}>
                 <View>
-                  <Text style={styles.productName}>{product.name}</Text>
-                  <Text style={styles.productCategory}>{product.category}</Text>
+                  <Text style={styles.productName}>{product.product_name}</Text>
+                  <Text style={styles.productCategory}>{product.description}</Text>
                 </View>
                 <View style={styles.productActions}>
                   <Pressable
@@ -81,7 +115,6 @@ export default function Products() {
               </View>
               <View style={styles.productMeta}>
                 <Text style={styles.productPrice}>KES {product.price}</Text>
-                <Text style={styles.productStock}>Stock: {product.stock}</Text>
               </View>
             </View>
           </View>
