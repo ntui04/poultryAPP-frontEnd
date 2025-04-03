@@ -1,16 +1,28 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  Image, 
+  RefreshControl, 
+  ActivityIndicator, 
+  TextInput,
+  TouchableOpacity,
+  Alert
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Search, ShoppingCart } from 'lucide-react-native';
 import apiz from '../services/api';
-
-
 
 export default function ShopProfile() {
   const [refreshing, setRefreshing] = useState(false);
-  const [shopData, setShopData] = useState([]); // Initialize as an empty array
+  const [shopData, setShopData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const mediaUrl = 'http://192.168.239.32:8000/storage/';
+
   useEffect(() => {
     const fetchToken = async () => {
       try {
@@ -28,35 +40,60 @@ export default function ShopProfile() {
     fetchToken();
   }, []);
 
-  useEffect(() => {
-    const fetchShopData = async () => {
-      setLoading(true);
-      try {
-        const response = await apiz.get('/products/farm',{
-          headers:{Authorization: `Bearer ${token}`}
-        })
-  
-        console.log("API Response:", response.data);
-  
-        // Update state with the fetched data
-        setShopData(response.data);
-      } catch (error) {
-        console.error('Error fetching shop data:', error.response?.data || error.message);
-        setLoading(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchShopData();
-  }, [token]);
+  const fetchShopData = async () => {
+    setLoading(true);
+    try {
+      const response = await apiz.get('/products/farm', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setShopData(response.data);
+    } catch (error) {
+      console.error('Error fetching shop data:', error.response?.data || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  
+  useEffect(() => {
+    if (token) {
+      fetchShopData();
+    }
+  }, [token]);
 
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchShopData();
     setRefreshing(false);
   };
+
+  const handleBuyNow = async (product) => {
+    try {
+      // Here you would typically make an API call to process the purchase
+      Alert.alert(
+        "Confirm Purchase",
+        `Would you like to buy ${product.product_name} for $${product.price}?`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Buy Now",
+            onPress: async () => {
+              // Implement your purchase logic here
+              Alert.alert("Success", "Purchase initiated successfully!");
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to process purchase. Please try again.");
+    }
+  };
+
+  const filteredProducts = shopData.filter(product =>
+    product.product_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -67,27 +104,52 @@ export default function ShopProfile() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      {shopData.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No products available</Text>
-        </View>
-      ) : (
-        shopData.map((product) => (
-          <View key={product.id} style={styles.productCard}>
-            <Image source={{ uri:mediaUrl + product.image }} style={styles.productImage} />
-            <View>
-              <Text style={styles.productname}>{product.product_name}</Text>
-              <Text style={styles.productDescription}>{product.description}</Text>
-              <Text style={styles.productPrice}>${product.price}</Text>
-            </View>
+    <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <Search size={20} color="#64748b" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search products....."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor="#94a3b8"
+        />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {filteredProducts.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No products available</Text>
           </View>
-        ))
-      )}
-    </ScrollView>
+        ) : (
+          filteredProducts.map((product) => (
+            <View key={product.id} style={styles.productCard}>
+              <Image 
+                source={{ uri: mediaUrl + product.image }} 
+                style={styles.productImage} 
+              />
+              <View style={styles.productInfo}>
+                <Text style={styles.productName}>{product.product_name}</Text>
+                <Text style={styles.productDescription}>{product.description}</Text>
+                <View style={styles.priceAndButton}>
+                  <Text style={styles.productPrice}>${product.price}</Text>
+                  <TouchableOpacity 
+                    style={styles.buyButton}
+                    onPress={() => handleBuyNow(product)}
+                  >
+                    <ShoppingCart size={20} color="#ffffff" style={styles.buttonIcon} />
+                    <Text style={styles.buyButtonText}>Buy Now</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -95,6 +157,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    margin: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    height: 48,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1f2937',
+  },
+  scrollContent: {
     padding: 16,
   },
   loadingContainer: {
@@ -104,30 +190,65 @@ const styles = StyleSheet.create({
   },
   productCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: 'hidden',
   },
   productImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 16,
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
   },
-  productname: {
-    fontSize: 18,
+  productInfo: {
+    padding: 16,
+  },
+  productName: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#1f2937',
+    marginBottom: 8,
   },
   productPrice: {
-    fontSize: 16,
-    color: '#64748b',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2563eb',
   },
   productDescription: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#64748b',
+    lineHeight: 24,
+    marginBottom: 16,
+  },
+  priceAndButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  buyButton: {
+    backgroundColor: '#2563eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  buyButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   emptyState: {
     flex: 1,
