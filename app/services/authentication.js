@@ -3,51 +3,14 @@ import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
 // const API_BASE_URL = 'http://127.0.0.1:8000/api';
-const API_BASE_URL = 'http://192.168.118.32:8000/api';
+const API_BASE_URL = 'http://192.168.239.32:8000/api';
 
 class AuthService {
   logout() {
     throw new Error('Method not implemented.');
   }
   // Register a new user
-  async register(userData) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/register`, userData);
-      
-      await AsyncStorage.setItem('userToken', response.data.token);
-      await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
-      
-      return response.data;
-    } catch (err) {
-      console.error('Registration Error:', err.response ? err.response.data : err);
-      
-      let errorMessage = 'Registration failed';
-      const apiErrors = {};
-      
-      if (err.response) {
-        if (err.response.data.errors) {
-          // Map backend errors to frontend field names
-          for (const [key, value] of Object.entries(err.response.data.errors)) {
-            if (key === 'password' && value.includes('confirmation')) {
-              apiErrors.confirm_password = value;
-            } else {
-              apiErrors[key] = value;
-            }
-          }
-          errorMessage = Object.values(apiErrors).flat().join(', ');
-        } else if (err.response.data.message) {
-          errorMessage = err.response.data.message;
-        }
-      }
-      
-      // Throw an object that contains both the message and the detailed errors
-      throw { 
-        message: errorMessage,
-        errors: apiErrors 
-      };
-    }
-  }
-
+ 
 
   // Login user
   async login(credentials) {

@@ -1,57 +1,56 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, RefreshControl, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
-import axios from 'axios';
+import { View, Text, StyleSheet, ScrollView, Image, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiz from '../services/api';
+
+
 
 export default function ShopProfile() {
   const [refreshing, setRefreshing] = useState(false);
   const [shopData, setShopData] = useState([]); // Initialize as an empty array
   const [loading, setLoading] = useState(true);
-
+  const [token, setToken] = useState(null);
+  const mediaUrl = 'http://192.168.239.32:8000/storage/';
   useEffect(() => {
-    fetchShopData();
+    const fetchToken = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem('token');
+        if (storedToken) {
+          setToken(storedToken);
+        } else {
+          console.error('No token found in AsyncStorage');
+        }
+      } catch (error) {
+        console.error('Error fetching token from AsyncStorage:', error);
+      }
+    };
+
+    fetchToken();
   }, []);
 
-  const fetchShopData = async () => {
-    setLoading(true);
-    try {
-      // Retrieve the token from AsyncStorage
-      const token = await AsyncStorage.getItem('userToken');
-      console.log("Retrieved Token:", token);
-
-      if (!token) {
-        console.error('No token found');
+  useEffect(() => {
+    const fetchShopData = async () => {
+      setLoading(true);
+      try {
+        const response = await apiz.get('/products/farm',{
+          headers:{Authorization: `Bearer ${token}`}
+        })
+  
+        console.log("API Response:", response.data);
+  
+        // Update state with the fetched data
+        setShopData(response.data);
+      } catch (error) {
+        console.error('Error fetching shop data:', error.response?.data || error.message);
         setLoading(false);
-        return;
+      } finally {
+        setLoading(false);
       }
+    };
+    fetchShopData();
+  }, [token]);
 
-      // Set up the Authorization header
-      const headers = {
-        Authorization: `Bearer ${token}`,
-      };
-
-      console.log("Request Headers:", headers);
-
-      // Make the API request
-      const response = await axios.get('http://192.168.118.32:8000/api/pataprod', { headers });
-
-      console.log("API Response:", response.data);
-
-      // Update state with the fetched data
-      setShopData(response.data);
-    } catch (error) {
-      console.error('Error fetching shop data:');
-      if (error.response) {
-        console.error('Response Status:', error.response.status);
-        console.error('Response Data:', error.response.data);
-      } else {
-        console.error('Error Message:', error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -72,19 +71,21 @@ export default function ShopProfile() {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      {shopData.length > 0 ? (
+      {shopData.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>No products available</Text>
+        </View>
+      ) : (
         shopData.map((product) => (
           <View key={product.id} style={styles.productCard}>
-            {/* <Image source={{ uri: product.image }} style={styles.image} /> */}
-            <Text style={styles.productname}>{product.product_name}</Text>
-            <Text style={styles.productPrice}>${product.price}</Text>
-            {/* Add other product details as needed */}
+            <Image source={{ uri:mediaUrl + product.image }} style={styles.productImage} />
+            <View>
+              <Text style={styles.productname}>{product.product_name}</Text>
+              <Text style={styles.productDescription}>{product.description}</Text>
+              <Text style={styles.productPrice}>${product.price}</Text>
+            </View>
           </View>
         ))
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No products available.</Text>
-        </View>
       )}
     </ScrollView>
   );
@@ -122,6 +123,10 @@ const styles = StyleSheet.create({
   },
   productPrice: {
     fontSize: 16,
+    color: '#64748b',
+  },
+  productDescription: {
+    fontSize: 14,
     color: '#64748b',
   },
   emptyState: {

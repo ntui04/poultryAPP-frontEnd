@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'http://192.168.239.32:8000/api';
 
 export const useAuthStore = create((set) => ({
   user: null,
