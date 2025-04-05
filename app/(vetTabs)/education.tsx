@@ -112,7 +112,8 @@ export default function Education() {
             <Pressable
               key={article.id}
               style={styles.articleCard}
-              onPress={() => router.push(`/article/${article.id}`)}>
+              onPress={() => router.push(`/articles/${article.id}`)}>
+                {/* /articles/edit/${item.id}`) */}
               <Image 
                 source={{uri:mediaUrl + article.image_url}}  style={styles.articleImage} />
                  {/* <Image source={{ uri:mediaUrl + product.image }} style={styles.productImage}  */}
