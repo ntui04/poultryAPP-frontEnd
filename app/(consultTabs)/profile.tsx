@@ -25,12 +25,13 @@ import {
   Users,
   ShoppingBag
 } from 'lucide-react-native';
+import AuthService from '../services/authentication';
 
 const Profile = () => {
   const { user, logout } = useAuthStore();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       "Logout",
       "Are you sure you want to logout?",
@@ -38,16 +39,24 @@ const Profile = () => {
         { text: "Cancel", style: "cancel" },
         { 
           text: "Logout", 
-          onPress: () => {
-            logout();
-            router.replace('/');
+          onPress: async () => {
+            try {
+              await logout(); // Clear local state first
+              const success = await AuthService.logout(); // Now properly awaited
+              
+              // This will always redirect, but you could add logic if needed
+              router.replace('/auth/login');
+              
+            } catch (error) {
+              console.error("Logout error:", error);
+              router.replace('/auth/login');
+            }
           },
           style: "destructive"
         }
       ]
     );
   };
-
   const profileOptions = [
     {
       id: 'personal',
@@ -71,7 +80,7 @@ const Profile = () => {
       id: 'security',
       title: 'Security Settings',
       icon: <Lock size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/security'),
+      onPress: () => router.push('/'),
     }
   ];
 
@@ -80,13 +89,13 @@ const Profile = () => {
       id: 'orders',
       title: 'My Orders',
       icon: <ShoppingBag size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/orders'),
+      onPress: () => router.push('/'),
     },
     {
       id: 'payments',
       title: 'Payment Methods',
       icon: <CreditCard size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/payment-methods'),
+      onPress: () => router.push('/'),
     },
     {
       id: 'notifications',
@@ -104,19 +113,19 @@ const Profile = () => {
       id: 'help',
       title: 'Help Center',
       icon: <HelpCircle size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/help'),
+      onPress: () => router.push('/'),
     },
     {
       id: 'terms',
       title: 'Terms & Conditions',
       icon: <FileText size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/terms'),
+      onPress: () => router.push('/'),
     },
     {
       id: 'privacy',
       title: 'Privacy Policy',
       icon: <FileText size={20} color="#2563eb" />,
-      onPress: () => router.push('/profile/privacy'),
+      onPress: () => router.push('/'),
     }
   ];
 
@@ -163,12 +172,12 @@ const Profile = () => {
           )}
         </View>
         
-        <Text style={styles.userName}>{user?.name || 'Hazey Dotcom'}</Text>
-        <Text style={styles.userEmail}>{user?.email || 'hazey@costa.com'}</Text>
+        <Text style={styles.userName}>{user?.firstname || ''}  {user?.lastname}</Text>
+        <Text style={styles.userEmail}>{user?.phone_number}</Text>
         
         <Pressable 
           style={styles.editProfileButton}
-          onPress={() => router.push('/profile/edit')}
+          onPress={() => router.push('../userprofile/')}
         >
           <Text style={styles.editProfileText}>Edit Profile</Text>
         </Pressable>
@@ -250,13 +259,13 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
   userName: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 4,
   },
   userEmail: {
-    fontSize: 16,
+    fontSize: 20,
     color: '#64748b',
     marginBottom: 16,
   },

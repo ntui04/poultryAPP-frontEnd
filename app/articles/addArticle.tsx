@@ -21,7 +21,7 @@ export default function AddPost() {
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('');
   const [author, setAuthor] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageUri, setImageUri] = useState('');
   const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
@@ -29,19 +29,13 @@ export default function AddPost() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [20, 20],
-        quality: 1,
+        aspect: [16, 9],
+        quality: 0.8,
+        base64: true,
       });
 
       if (!result.canceled) {
-        if (Platform.OS === 'web') {
-          // For web, we can use the URI directly
-          setImageUrl(result.assets[0].uri);
-        } else {
-          // For native platforms, we might need to handle the file differently
-          // For this example, we'll just use the URI
-          setImageUrl(result.assets[0].uri);
-        }
+        setImageUri(result.assets[0].uri);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to pick image');
@@ -56,13 +50,28 @@ export default function AddPost() {
 
     try {
       setLoading(true);
-      await articlesApi.create({
-        title,
-        content,
-        category,
-        author,
-        image_url: imageUrl || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1920&auto=format&fit=crop'
-      });
+
+      // Create FormData object
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('content', content);
+      formData.append('category', category);
+      formData.append('author', author);
+
+      // Append image if selected
+      if (imageUri) {
+        const filename = imageUri.split('/').pop() || 'image.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        formData.append('image', {
+          uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
+          name: filename,
+          type,
+        } as any);
+      }
+
+      await articlesApi.create(formData);
       Alert.alert('Success', 'Post created successfully');
       router.back();
     } catch (error: any) {
@@ -83,8 +92,8 @@ export default function AddPost() {
 
       <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
         <View style={styles.imagePreview}>
-          {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.previewImage} />
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.previewImage} />
           ) : (
             <View style={styles.imagePlaceholder}>
               <ImageIcon size={48} color="#94a3b8" />
