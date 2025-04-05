@@ -1,49 +1,80 @@
-import { useState } from 'react';                    
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, TextInput } from 'react-native';
+import { useState, useEffect } from 'react';                    
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  Image, 
+  Pressable, 
+  TextInput,
+  ActivityIndicator,
+  RefreshControl
+} from 'react-native';
 import { router } from 'expo-router';
 import { Search, BookOpen, CirclePlay as PlayCircle } from 'lucide-react-native';
+import { articlesApi } from '../services/api';
+
+interface Article {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  author: string;
+  image_url: string;
+  created_at?: string;
+}
+
 
 export default function Education() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const featuredCourses = [
-    {
-      id: '1',
-      title: 'Poultry Health Management',
-      instructor: 'Dr. Sarah Wilson',
-      duration: '4 weeks',
-      image: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c',
-      rating: 4.8,
-    },
-    {
-      id: '2',
-      title: 'Feed Formulation Basics',
-      instructor: 'Prof. John Carter',
-      duration: '3 weeks',
-      image: 'https://images.unsplash.com/photo-1620574387735-3624d75b2dbc',
-      rating: 4.6,
-    },
-  ];
+  const mediaUrl = 'http://192.168.71.32:8000/storage/';
 
-  const articles = [
-    {
-      id: '1',
-      title: 'Common Diseases in Layer Chickens',
-      author: 'Dr. Emily Brown',
-      readTime: '5 min read',
-      image: 'https://images.unsplash.com/photo-1569597967185-cd6120712154',
-    },
-    {
-      id: '2',
-      title: 'Optimizing Broiler Production',
-      author: 'James Wilson',
-      readTime: '8 min read',
-      image: 'https://images.unsplash.com/photo-1548767797-d8c844163c4c',
-    },
-  ];
+  const fetchArticles = async () => {
+    try {
+      setError(null);
+      const response = await articlesApi.getAll();
+      setArticles(response.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to fetch articles');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchArticles();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchArticles();
+    setRefreshing(false);
+  };
+
+  const filteredArticles = articles.filter(article =>
+    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    article.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getReadTime = (content: string) => {
+    const wordsPerMinute = 200;
+    const words = content.split(/\s+/).length;
+    const minutes = Math.ceil(words / wordsPerMinute);
+    return `${minutes} min read`;
+  };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Learn & Grow</Text>
         <View style={styles.searchContainer}>
@@ -53,53 +84,52 @@ export default function Education() {
             placeholder="Search courses and articles..."
             value={searchQuery}
             onChangeText={setSearchQuery}
+            placeholderTextColor="#94a3b8"
           />
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Featured Courses</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {featuredCourses.map((course) => (
-            <Pressable
-              key={course.id}
-              style={styles.courseCard}
-              onPress={() => router.push(`/course/${course.id}`)}>
-              <Image source={{ uri: course.image }} style={styles.courseImage} />
-              <View style={styles.courseInfo}>
-                <Text style={styles.courseTitle}>{course.title}</Text>
-                <Text style={styles.instructor}>{course.instructor}</Text>
-                <View style={styles.courseMeta}>
-                  <View style={styles.duration}>
-                    <PlayCircle size={16} color="#64748b" />
-                    <Text style={styles.durationText}>{course.duration}</Text>
-                  </View>
-                  <Text style={styles.rating}>★ {course.rating}</Text>
-                </View>
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Latest Articles</Text>
-        {articles.map((article) => (
-          <Pressable
-            key={article.id}
-            style={styles.articleCard}
-            onPress={() => router.push(`/article/${article.id}`)}>
-            <Image source={{ uri: article.image }} style={styles.articleImage} />
-            <View style={styles.articleInfo}>
-              <Text style={styles.articleTitle}>{article.title}</Text>
-              <Text style={styles.articleAuthor}>{article.author}</Text>
-              <View style={styles.articleMeta}>
-                <BookOpen size={16} color="#64748b" />
-                <Text style={styles.readTime}>{article.readTime}</Text>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#2563eb" />
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <Pressable style={styles.retryButton} onPress={fetchArticles}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : filteredArticles.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No articles found</Text>
+          </View>
+        ) : (
+          filteredArticles.map((article) => (
+            <Pressable
+              key={article.id}
+              style={styles.articleCard}
+              onPress={() => router.push(`/article/${article.id}`)}>
+              <Image 
+                source={{uri:mediaUrl + article.image_url}}  style={styles.articleImage} />
+                 {/* <Image source={{ uri:mediaUrl + product.image }} style={styles.productImage}  */}
+              <View style={styles.articleInfo}>
+                <View style={styles.categoryContainer}>
+                  <Text style={styles.category}>{article.category}</Text>
+                </View>
+                <Text style={styles.articleTitle}>{article.title}</Text>
+                <Text style={styles.articleAuthor}>By {article.author}</Text>
+                <View style={styles.articleMeta}>
+                  <BookOpen size={16} color="#64748b" />
+                  <Text style={styles.readTime}>{getReadTime(article.content)}</Text>
+                </View>
               </View>
-            </View>
-          </Pressable>
-        ))}
+            </Pressable>
+          ))
+        )}
       </View>
     </ScrollView>
   );
@@ -204,10 +234,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    overflow: 'hidden',
   },
   articleImage: {
-    width: 100,
-    height: 100,
+    width: 120,
+    height: 140,
     borderTopLeftRadius: 12,
     borderBottomLeftRadius: 12,
   },
@@ -215,24 +246,68 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  categoryContainer: {
+    marginBottom: 8,
+  },
+  category: {
+    backgroundColor: '#eff6ff',
+    color: '#2563eb',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    fontSize: 12,
+    fontWeight: '500',
+    alignSelf: 'flex-start',
+  },
   articleTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
+    marginBottom: 8,
   },
   articleAuthor: {
     fontSize: 14,
     color: '#64748b',
-    marginTop: 4,
+    marginBottom: 8,
   },
   articleMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
   },
   readTime: {
     marginLeft: 4,
     fontSize: 14,
     color: '#64748b',
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  errorContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#ef4444',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#64748b',
+    fontSize: 16,
   },
 });

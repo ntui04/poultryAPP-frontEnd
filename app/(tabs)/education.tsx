@@ -20,7 +20,7 @@ interface Article {
   content: string;
   category: string;
   author: string;
-  mediaUrl: string;
+  image_url: string;
   created_at?: string;
 }
 
