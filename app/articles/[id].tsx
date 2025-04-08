@@ -33,7 +33,7 @@ export default function ArticleScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
 
-  const mediaUrl = 'http://192.168.71.32:8000/storage/';
+  const mediaUrl = 'http://192.168.6.32:8000/storage/';
 
   useEffect(() => {
     fetchArticle();
@@ -166,10 +166,7 @@ export default function ArticleScreen() {
           </Text>
         </Pressable>
 
-        <Pressable style={styles.actionButton}>
-          <MessageCircle size={24} color="#64748b" />
-          <Text style={styles.actionText}>Comment</Text>
-        </Pressable>
+      
 
         <Pressable style={styles.actionButton} onPress={handleShare}>
           <Share2 size={24} color="#64748b" />
@@ -201,6 +198,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   coverImage: {
+    marginTop: 16,
     width: width,
     height: width * 0.75,
   },

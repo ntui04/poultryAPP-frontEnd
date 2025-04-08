@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const apiz = axios.create({
-  baseURL: 'http://192.168.71.32:8000/api',
+  baseURL: 'http://192.168.6.32:8000/api',
   timeout: 10000,
 })
 
@@ -33,6 +33,16 @@ export const articlesApi = {
   update: (id: string, data: any) => apiz.put(`/articles/${id}`, data),
   delete: (id: string) => apiz.delete(`/articles/${id}`),
 };
+
+export const productsApi = {
+  getAll: () => apiz.get('/products/farm'),
+  purchase: (data: {
+    product_id: number;
+    quantity: number;
+    total_price: number;
+  }) => apiz.post('/purchases', data),
+};
+
 
 
 export default apiz;

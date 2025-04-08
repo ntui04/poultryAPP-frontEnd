@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Image, 
-  RefreshControl, 
-  ActivityIndicator, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  RefreshControl,
+  ActivityIndicator,
   TextInput,
   TouchableOpacity,
-  Alert
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Search, ShoppingCart } from 'lucide-react-native';
-import apiz from '../services/api';
+import { Search, ShoppingCart, Minus, Plus } from 'lucide-react-native';
+import apiz, { productsApi } from '../services/api';
 
 export default function ShopProfile() {
   const [refreshing, setRefreshing] = useState(false);
@@ -21,7 +21,9 @@ export default function ShopProfile() {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
   const mediaUrl = 'http://192.168.239.32:8000/storage/';
+  const [selectedQuantities, setSelectedQuantities] = useState({});
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -43,12 +45,20 @@ export default function ShopProfile() {
   const fetchShopData = async () => {
     setLoading(true);
     try {
-      const response = await apiz.get('/products/farm', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await productsApi.getAll();
       setShopData(response.data);
+      
+      // Initialize quantities for all products
+      const initialQuantities = {};
+      response.data.forEach(product => {
+        initialQuantities[product.id] = 1;
+      });
+      setSelectedQuantities(initialQuantities);
     } catch (error) {
-      console.error('Error fetching shop data:', error.response?.data || error.message);
+      console.error(
+        'Error fetching shop data:',
+        error.response?.data || error.message
+      );
     } finally {
       setLoading(false);
     }
@@ -67,31 +77,62 @@ export default function ShopProfile() {
   };
 
   const handleBuyNow = async (product) => {
+    const quantity = selectedQuantities[product.id] || 1;
+    const totalPrice = parseFloat((product.price * quantity).toFixed(2));
+
     try {
-      // Here you would typically make an API call to process the purchase
       Alert.alert(
-        "Confirm Purchase",
-        `Would you like to buy ${product.product_name} for $${product.price}?`,
+        'Confirm Purchase',
+        `Would you like to buy ${quantity} ${quantity === 1 ? 'unit' : 'units'} of ${product.product_name} for $${totalPrice}?`,
         [
           {
-            text: "Cancel",
-            style: "cancel"
+            text: 'Cancel',
+            style: 'cancel',
           },
           {
-            text: "Buy Now",
+            text: 'Buy Now',
             onPress: async () => {
-              // Implement your purchase logic here
-              Alert.alert("Success", "Purchase initiated successfully!");
-            }
-          }
+              try {
+                setPurchaseLoading(true);
+                await productsApi.purchase({
+                  product_id: product.id,
+                  quantity: quantity,
+                  total_price: totalPrice,
+                });
+                Alert.alert(
+                  'Success',
+                  `Successfully purchased ${quantity} ${
+                    quantity === 1 ? 'unit' : 'units'
+                  } of ${product.product_name}!`
+                );
+                // Refresh the product list after successful purchase
+                fetchShopData();
+              } catch (error) {
+                console.error('Purchase error:', error);
+                Alert.alert(
+                  'Error',
+                  error.response?.data?.message || 'Failed to process purchase. Please try again.'
+                );
+              } finally {
+                setPurchaseLoading(false);
+              }
+            },
+          },
         ]
       );
     } catch (error) {
-      Alert.alert("Error", "Failed to process purchase. Please try again.");
+      Alert.alert('Error', 'Failed to process purchase. Please try again.');
     }
   };
 
-  const filteredProducts = shopData.filter(product =>
+  const updateQuantity = (productId, amount) => {
+    setSelectedQuantities(prev => ({
+      ...prev,
+      [productId]: Math.max(1, (prev[productId] || 1) + amount),
+    }));
+  };
+
+  const filteredProducts = shopData.filter((product) =>
     product.product_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -118,7 +159,9 @@ export default function ShopProfile() {
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {filteredProducts.length === 0 ? (
           <View style={styles.emptyState}>
@@ -127,23 +170,55 @@ export default function ShopProfile() {
         ) : (
           filteredProducts.map((product) => (
             <View key={product.id} style={styles.productCard}>
-              <Image 
-                source={{ uri: mediaUrl + product.image }} 
-                style={styles.productImage} 
+              <Image
+                source={{ uri: mediaUrl + product.image }}
+                style={styles.productImage}
               />
               <View style={styles.productInfo}>
                 <Text style={styles.productName}>{product.product_name}</Text>
-                <Text style={styles.productDescription}>{product.description}</Text>
-                <View style={styles.priceAndButton}>
-                  <Text style={styles.productPrice}>${product.price}</Text>
-                  <TouchableOpacity 
-                    style={styles.buyButton}
-                    onPress={() => handleBuyNow(product)}
-                  >
-                    <ShoppingCart size={20} color="#ffffff" style={styles.buttonIcon} />
-                    <Text style={styles.buyButtonText}>Buy Now</Text>
-                  </TouchableOpacity>
+                <Text style={styles.productDescription}>
+                  {product.description}
+                </Text>
+                <View style={styles.priceAndQuantity}>
+                  <Text style={styles.productPrice}>
+                    ${(product.price * (selectedQuantities[product.id] || 1)).toFixed(2)}
+                  </Text>
+                  <View style={styles.quantityContainer}>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() => updateQuantity(product.id, -1)}
+                    >
+                      <Minus size={16} color="#64748b" />
+                    </TouchableOpacity>
+                    <Text style={styles.quantityText}>
+                      {selectedQuantities[product.id] || 1}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() => updateQuantity(product.id, 1)}
+                    >
+                      <Plus size={16} color="#64748b" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
+                <TouchableOpacity
+                  style={[styles.buyButton, purchaseLoading && styles.buyButtonDisabled]}
+                  onPress={() => handleBuyNow(product)}
+                  disabled={purchaseLoading}
+                >
+                  {purchaseLoading ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <>
+                      <ShoppingCart
+                        size={20}
+                        color="#ffffff"
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={styles.buyButtonText}>Buy Now</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
           ))
@@ -225,23 +300,53 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 16,
   },
-  priceAndButton: {
+  priceAndQuantity: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 16,
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 8,
+    padding: 4,
+  },
+  quantityButton: {
+    padding: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginHorizontal: 16,
+    minWidth: 24,
+    textAlign: 'center',
   },
   buyButton: {
     backgroundColor: '#2563eb',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderRadius: 8,
     shadowColor: '#2563eb',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
+  },
+  buyButtonDisabled: {
+    backgroundColor: '#93c5fd',
   },
   buttonIcon: {
     marginRight: 8,
