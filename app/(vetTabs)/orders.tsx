@@ -177,7 +177,7 @@ export default function Orders() {
             key={order.id}
             style={styles.orderCard}
             onPress={() => router.push({
-              pathname: '/shop/VetOrder/[id]',
+              pathname: '/shop/Shop Order/[id]',
               params: { id: order.id }
             })}>
             <View style={styles.orderHeader}>

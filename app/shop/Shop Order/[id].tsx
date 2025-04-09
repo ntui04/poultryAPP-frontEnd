@@ -23,7 +23,6 @@ import {
   Package2,
 } from 'lucide-react-native';
 import { ordersApi } from '../../services/api';
-import { Stack } from 'expo-router';
 
 interface Order {
   id: number;
@@ -143,13 +142,6 @@ export default function OrderDetails() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#1e293b" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Order #{order.id}</Text>
-      </View>
-
       <ScrollView style={styles.content}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
