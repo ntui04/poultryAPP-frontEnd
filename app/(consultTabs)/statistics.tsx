@@ -1,5 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl
+} from 'react-native';
 import { 
   UserCheck, 
   Store, 
@@ -8,48 +15,137 @@ import {
   ChevronUp, 
   ChevronDown 
 } from 'lucide-react-native';
+import { statisticsApi } from '../services/api';
+
+interface Statistics {
+  totalUsers: number;
+  totalShops: number;
+  totalPosts: number;
+  monthlyGrowth: {
+    users: {
+      value: number;
+      isPositive: boolean;
+    };
+    shops: {
+      value: number;
+      isPositive: boolean;
+    };
+    posts: {
+      value: number;
+      isPositive: boolean;
+    };
+  };
+  recentActivity: {
+    newUsers: number;
+    newShops: number;
+    newPosts: number;
+  };
+}
 
 export default function Statistics() {
-  const statistics = {
-    totalUsers: 5234,
-    totalShops: 1876,
-    totalPosts: 423,
-    monthlyGrowth: {
-      users: {
-        value: 12.5,
-        isPositive: true
-      },
-      shops: {
-        value: 8.3,
-        isPositive: true
-      },
-      posts: {
-        value: 5.7,
-        isPositive: false
-      }
+  const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchStatistics = async () => {
+    try {
+      setError(null);
+      const [overview, growth, activity] = await Promise.all([
+        statisticsApi.getOverview(),
+        statisticsApi.getMonthlyGrowth(),
+        statisticsApi.getRecentActivity(),
+      ]);
+
+      setStatistics({
+        ...overview.data,
+        monthlyGrowth: {
+          users: growth.data?.users || { value: 0, isPositive: true },
+          shops: growth.data?.shops || { value: 0, isPositive: true },
+          posts: growth.data?.posts || { value: 0, isPositive: true },
+        },
+        recentActivity: activity.data || {
+          newUsers: 0,
+          newShops: 0,
+          newPosts: 0,
+        },
+      });
+    } catch (err: any) {
+      console.error('Error fetching statistics:', err.response?.data || err.message);
+      setError(err.response?.data?.message || 'Failed to fetch statistics');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const StatisticCard = ({ icon: Icon, title, value, growth }) => (
-    <View style={styles.statisticCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.iconContainer}>
-          <Icon size={24} color="#2563eb" />
+  useEffect(() => {
+    fetchStatistics();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchStatistics();
+    setRefreshing(false);
+  };
+
+  const StatisticCard = ({ icon: Icon, title, value, growth }) => {
+    const isPositive = growth?.isPositive ?? true;
+    const growthValue = growth?.value ?? 0;
+
+    return (
+      <View style={styles.statisticCard}>
+        <View style={styles.cardHeader}>
+          <View style={styles.iconContainer}>
+            <Icon size={24} color="#2563eb" />
+          </View>
+          <Text style={styles.cardTitle}>{title}</Text>
         </View>
-        <Text style={styles.cardTitle}>{title}</Text>
-      </View>
-      <View style={styles.cardContent}>
-        <Text style={styles.cardValue}>{value.toLocaleString()}</Text>
-        <View style={[
-          styles.growthBadge, 
-          growth.isPositive ? styles.positiveGrowth : styles.negativeGrowth
-        ]}>
-          {growth.isPositive ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          <Text style={styles.growthText}>{growth.value}%</Text>
+        <View style={styles.cardContent}>
+          <Text style={styles.cardValue}>{value.toLocaleString()}</Text>
+          <View
+            style={[
+              styles.growthBadge,
+              isPositive ? styles.positiveGrowth : styles.negativeGrowth,
+            ]}
+          >
+            {isPositive ? (
+              <ChevronUp size={16} color="#059669" />
+            ) : (
+              <ChevronDown size={16} color="#dc2626" />
+            )}
+            <Text
+              style={[
+                styles.growthText,
+                isPositive ? styles.positiveGrowthText : styles.negativeGrowthText,
+              ]}
+            >
+              {growthValue}%
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
+  if (!statistics) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
@@ -61,6 +157,9 @@ export default function Statistics() {
       <ScrollView 
         style={styles.statisticsContainer}
         contentContainerStyle={styles.statisticsContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         <StatisticCard 
           icon={UserCheck}
@@ -87,15 +186,21 @@ export default function Statistics() {
           <Text style={styles.detailsSectionTitle}>Recent Activity</Text>
           <View style={styles.activityItem}>
             <Calendar size={20} color="#64748b" />
-            <Text style={styles.activityText}>New users joined this month: 652</Text>
+            <Text style={styles.activityText}>
+              New users joined this month: {statistics.recentActivity.newUsers}
+            </Text>
           </View>
           <View style={styles.activityItem}>
             <Store size={20} color="#64748b" />
-            <Text style={styles.activityText}>New shops registered this month: 247</Text>
+            <Text style={styles.activityText}>
+              New shops registered this month: {statistics.recentActivity.newShops}
+            </Text>
           </View>
           <View style={styles.activityItem}>
             <FileText size={20} color="#64748b" />
-            <Text style={styles.activityText}>Posts created this month: 87</Text>
+            <Text style={styles.activityText}>
+              Posts created this month: {statistics.recentActivity.newPosts}
+            </Text>
           </View>
         </View>
       </ScrollView>
@@ -108,31 +213,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 16,
+    textAlign: 'center',
+  },
   header: {
-    backgroundColor: '#fff',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
+    padding: 24,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
   pageTitle: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 8,
   },
   pageSubtitle: {
     fontSize: 16,
     color: '#64748b',
+    marginTop: 4,
   },
   statisticsContainer: {
-    padding: 16,
+    flex: 1,
   },
   statisticsContent: {
-    paddingBottom: 32,
+    padding: 16,
   },
   statisticCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -145,12 +265,12 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   iconContainer: {
-    backgroundColor: '#e0f2fe',
-    borderRadius: 50,
-    padding: 10,
+    backgroundColor: '#eff6ff',
+    padding: 8,
+    borderRadius: 8,
     marginRight: 12,
   },
   cardTitle: {
@@ -160,12 +280,12 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   cardValue: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#1f2937',
   },
   growthBadge: {
@@ -173,25 +293,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: 6,
   },
   positiveGrowth: {
     backgroundColor: '#dcfce7',
-    color: '#166534',
   },
   negativeGrowth: {
     backgroundColor: '#fee2e2',
-    color: '#991b1b',
   },
   growthText: {
     marginLeft: 4,
     fontWeight: '600',
   },
+  positiveGrowthText: {
+    color: '#059669',
+  },
+  negativeGrowthText: {
+    color: '#dc2626',
+  },
   detailsSection: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 16,
-    marginTop: 16,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   detailsSectionTitle: {
     fontSize: 18,
@@ -203,10 +332,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-    gap: 12,
   },
   activityText: {
-    fontSize: 16,
+    marginLeft: 12,
+    fontSize: 14,
     color: '#64748b',
   },
 });

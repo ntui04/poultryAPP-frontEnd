@@ -50,4 +50,12 @@ export const ordersApi = {
 };
 
 
+
+export const statisticsApi = {
+  getOverview: () => apiz.get('/statistics/overview'),
+  getMonthlyGrowth: () => apiz.get('/statistics/monthly-growth'),
+  getRecentActivity: () => apiz.get('/statistics/recent-activity'),
+};
+
+
 export default apiz;
