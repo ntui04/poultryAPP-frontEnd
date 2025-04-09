@@ -85,7 +85,7 @@ export default function Orders() {
   };
 
   const filteredOrders = orders.filter(order => {
-    const userName = order.user?.name || '';
+    const userName = order.user?.lastname || '';
     const productName = order.product?.product_name || '';
     
     const matchesSearch = 
@@ -177,7 +177,7 @@ export default function Orders() {
             key={order.id}
             style={styles.orderCard}
             onPress={() => router.push({
-              pathname: '/order/[id]',
+              pathname: '/shop/VetOrder/[id]',
               params: { id: order.id }
             })}>
             <View style={styles.orderHeader}>
