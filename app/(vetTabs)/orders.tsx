@@ -1,54 +1,49 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { Search, Package, Truck, CheckCircle2, Clock, AlertCircle } from 'lucide-react-native';
+import { Search, Package, Truck, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle } from 'lucide-react-native';
+import apiz from '../services/api';
+
+interface Order {
+  id: number;
+  user: {
+    firstname: string;
+    lastname: string;
+    phone_number?: string;
+  };
+  product: {
+    product_name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  total_price: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered';
+  created_at: string;
+}
 
 export default function Orders() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'processing' | 'shipped' | 'delivered'>('all');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const orders = [
-    {
-      id: 'ORD001',
-      customerName: 'John Doe',
-      date: '2024-02-20',
-      total: 15000,
-      items: 3,
-      status: 'pending',
-      address: 'Karen, Nairobi',
-      phone: '+254 712 345 678',
-    },
-    {
-      id: 'ORD002',
-      customerName: 'Jane Smith',
-      date: '2024-02-19',
-      total: 8500,
-      items: 2,
-      status: 'processing',
-      address: 'Westlands, Nairobi',
-      phone: '+254 723 456 789',
-    },
-    {
-      id: 'ORD003',
-      customerName: 'Mike Johnson',
-      date: '2024-02-18',
-      total: 22000,
-      items: 5,
-      status: 'shipped',
-      address: 'Kilimani, Nairobi',
-      phone: '+254 734 567 890',
-    },
-    {
-      id: 'ORD004',
-      customerName: 'Sarah Williams',
-      date: '2024-02-17',
-      total: 12500,
-      items: 4,
-      status: 'delivered',
-      address: 'Lavington, Nairobi',
-      phone: '+254 745 678 901',
-    },
-  ];
+  const fetchOrders = async () => {
+    try {
+      setError(null);
+      const response = await apiz.get('/orders');
+      setOrders(response.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -80,16 +75,52 @@ export default function Orders() {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         order.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const userName = order.user?.name || '';
+    const productName = order.product?.product_name || '';
+    
+    const matchesSearch = 
+      userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      productName.toLowerCase().includes(searchQuery.toLowerCase());
+  
     const matchesFilter = selectedFilter === 'all' || order.status === selectedFilter;
+  
     return matchesSearch && matchesFilter;
   });
+  
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Pressable style={styles.retryButton} onPress={fetchOrders}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <Text style={styles.title}>Orders Management</Text>
         <View style={styles.searchContainer}>
           <Search size={20} color="#64748b" style={styles.searchIcon} />
           <TextInput
@@ -97,6 +128,7 @@ export default function Orders() {
             placeholder="Search orders..."
             value={searchQuery}
             onChangeText={setSearchQuery}
+            placeholderTextColor="#94a3b8"
           />
         </View>
       </View>
@@ -145,13 +177,13 @@ export default function Orders() {
             key={order.id}
             style={styles.orderCard}
             onPress={() => router.push({
-              pathname: '/shop/order-details',
+              pathname: '/order/[id]',
               params: { id: order.id }
             })}>
             <View style={styles.orderHeader}>
               <View>
-                <Text style={styles.orderId}>{order.id}</Text>
-                <Text style={styles.orderDate}>{order.date}</Text>
+                <Text style={styles.orderId}>Order #{order.id}</Text>
+                <Text style={styles.orderDate}>{formatDate(order.created_at)}</Text>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order.status)}15` }]}>
                 {getStatusIcon(order.status)}
@@ -162,14 +194,21 @@ export default function Orders() {
             </View>
 
             <View style={styles.customerInfo}>
-              <Text style={styles.customerName}>{order.customerName}</Text>
-              <Text style={styles.customerDetails}>{order.phone}</Text>
-              <Text style={styles.customerDetails}>{order.address}</Text>
+              <Text style={styles.customerName}>{order.user.firstname}</Text>
+              <Text style={styles.customerName}>{order.user.lastname}</Text>
+              {order.user.phone_number && (
+                <Text style={styles.customerDetails}>{order.user.phone_number}</Text>
+              )}
+            </View>
+
+            <View style={styles.productInfo}>
+              <Text style={styles.productName}>{order.product.product_name}</Text>
+              <Text style={styles.quantityText}>Quantity: {order.quantity}</Text>
             </View>
 
             <View style={styles.orderFooter}>
-              <Text style={styles.itemCount}>{order.items} items</Text>
-              <Text style={styles.orderTotal}>KES {order.total.toLocaleString()}</Text>
+              <Text style={styles.itemCount}>Unit Price: ${order.product.price}</Text>
+              <Text style={styles.orderTotal}>${order.total_price}</Text>
             </View>
           </Pressable>
         ))}
@@ -188,6 +227,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
+    paddingTop: 60,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 16,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -285,6 +331,19 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginBottom: 2,
   },
+  productInfo: {
+    marginBottom: 12,
+  },
+  productName: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  quantityText: {
+    fontSize: 14,
+    color: '#64748b',
+  },
   orderFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -301,5 +360,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#2563eb',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ef4444',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontWeight: '500',
   },
 });
