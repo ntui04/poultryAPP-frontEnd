@@ -13,18 +13,28 @@ import { Package2, Calendar, DollarSign, Store } from 'lucide-react-native';
 import { router } from 'expo-router';
 import apiz from '../services/api';
 
+interface Shop {
+  id: number;
+  name: string;
+  lastname: string;
+  image_url: string;
+}
+
+interface Product {
+  id: number;
+  product_name: string;
+  image: string;
+  price: number;
+  shop: Shop;
+}
+
 interface Purchase {
   id: number;
   quantity: number;
   total_price: number;
   status: 'pending' | 'completed' | 'cancelled';
   created_at: string;
-  product: {
-    id: number;
-    product_name: string;
-    image: string;
-    price: number;
-  };
+  product: Product;
 }
 
 export default function Orders() {
@@ -102,33 +112,34 @@ export default function Orders() {
             <Package2 size={48} color="#94a3b8" />
             <Text style={styles.emptyText}>No orders found</Text>
             <Text style={styles.emptySubtext}>
-              Your purchase history will appear here
+              You haven't placed any orders yet
             </Text>
           </View>
         ) : (
           orders.map((order) => (
             <View key={order.id} style={styles.orderCard}>
-              <Pressable
-                style={styles.shopHeader}
-                onPress={() =>
-                  order.shop ? navigateToShop(order.shop.id) : null
-                } // Only navigate if shop exists
-              >
-                <View style={styles.shopInfo}>
-                  {order.shop?.logo ? (
-                    <Image
-                      source={{ uri: mediaUrl + order.shop.image_url }}
-                      style={styles.shopLogo}
-                    />
-                  ) : (
-                    <Store size={20} color="#64748b" />
-                  )}
-                  <Text style={styles.shopName}>
-                    {order.shop?.lastname || 'Unknown Shop'}
-                  </Text>
-                </View>
-                {order.shop && <Text style={styles.viewShop}>View Shop</Text>}
-              </Pressable>
+              {/* Shop Header Section */}
+              {order.product.shop && (
+                <Pressable
+                  style={styles.shopHeader}
+                  onPress={() => navigateToShop(order.product.shop.id)}
+                >
+                  <View style={styles.shopInfo}>
+                    {order.product.shop.image_url ? (
+                      <Image
+                        source={{ uri: mediaUrl + order.product.shop.image_url }}
+                        style={styles.shopLogo}
+                      />
+                    ) : (
+                      <Store size={20} color="#64748b" />
+                    )}
+                    <Text style={styles.shopName}>
+                      {order.product.shop.lastname || order.product.shop.name || 'Unknown Shop'}
+                    </Text>
+                  </View>
+                  <Text style={styles.viewShop}>View Shop</Text>
+                </Pressable>
+              )}
 
               <View style={styles.orderHeader}>
                 <View style={styles.statusContainer}>
@@ -242,12 +253,11 @@ const styles = StyleSheet.create({
   },
   shopHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
   },
   shopInfo: {
     flexDirection: 'row',
@@ -263,11 +273,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#1e293b',
-    marginLeft: 8,
   },
   viewShop: {
-    fontSize: 14,
     color: '#2563eb',
+    fontSize: 14,
     fontWeight: '500',
   },
   orderHeader: {

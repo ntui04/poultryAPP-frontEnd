@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store'
 const apiz = axios.create({
-  baseURL: 'http://192.168.89.32:8000/api',
+  baseURL: 'http://192.168.239.32:8000/api',
   timeout: 10000,
 })
 
@@ -36,6 +36,7 @@ export const articlesApi = {
 
 export const productsApi = {
   getAll: () => apiz.get('/products/farm'),
+  getMyPurchases: () => apiz.get('/purchases'), // Add this endpoint
   purchase: (data: {
     product_id: number;
     quantity: number;
