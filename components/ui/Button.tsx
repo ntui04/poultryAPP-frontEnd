@@ -1,34 +1,32 @@
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { ReactNode } from 'react';
+import React from 'react';
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacityProps,
+} from 'react-native';
 
-interface ButtonProps {
-  onPress: () => void;
-  children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'outline';
+interface ButtonProps extends TouchableOpacityProps {
+  children: React.ReactNode;
   loading?: boolean;
-  disabled?: boolean;
 }
 
-export function Button({
-  onPress,
-  children,
-  variant = 'primary',
-  loading = false,
-  disabled = false,
-}: ButtonProps) {
+export function Button({ children, loading, style, disabled, ...props }: ButtonProps) {
   return (
     <TouchableOpacity
       style={[
         styles.button,
-        styles[variant],
-        (disabled || loading) && styles.disabled,
+        disabled && styles.buttonDisabled,
+        style,
       ]}
-      onPress={onPress}
-      disabled={disabled || loading}>
+      disabled={disabled || loading}
+      {...props}
+    >
       {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? '#2563eb' : '#ffffff'} />
+        <ActivityIndicator color="#fff" />
       ) : (
-        <Text style={[styles.text, styles[`${variant}Text`]]}>{children}</Text>
+        <Text style={styles.buttonText}>{children}</Text>
       )}
     </TouchableOpacity>
   );
@@ -36,37 +34,19 @@ export function Button({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    backgroundColor: '#0891b2',
+    height: 48,
     borderRadius: 8,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
   },
-  primary: {
-    backgroundColor: '#2563eb',
+  buttonDisabled: {
+    backgroundColor: '#94a3b8',
   },
-  secondary: {
-    backgroundColor: '#64748b',
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#2563eb',
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  text: {
+  buttonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  primaryText: {
-    color: '#ffffff',
-  },
-  secondaryText: {
-    color: '#ffffff',
-  },
-  outlineText: {
-    color: '#2563eb',
   },
 });

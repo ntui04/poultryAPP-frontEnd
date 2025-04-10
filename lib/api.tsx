@@ -3,8 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
-  // baseURL: 'http://192.168.47.32:8000/api',
+  // baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: 'http://192.168.89.32:8000/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -88,6 +88,15 @@ export const auth = {
     const response = await api.get('/api/user');
     return response.data;
   },
+};
+
+
+export const setAuthToken = (token: string | null) => {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+  }
 };
 
 // Agro-vet shop endpoints

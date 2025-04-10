@@ -10,6 +10,7 @@ class AuthService {
     throw new Error('Method not implemented.');
   }
   // Register a new user
+  
  
 
   // Login user

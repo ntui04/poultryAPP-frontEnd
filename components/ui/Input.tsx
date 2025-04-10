@@ -1,60 +1,47 @@
-import { TextInput, View, Text, StyleSheet } from 'react-native';
+import React from 'react';
+import {
+  View,
+  TextInput,
+  Text,
+  StyleSheet,
+  TextInputProps,
+} from 'react-native';
 
-interface InputProps {
+interface InputProps extends TextInputProps {
   label: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  secureTextEntry?: boolean;
-  error?: string;
 }
 
-export function Input({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  secureTextEntry,
-  error,
-}: InputProps) {
+export function Input({ label, style, ...props }: InputProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={[styles.input, error && styles.inputError]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        secureTextEntry={secureTextEntry}
+        style={[styles.input, style]}
+        placeholderTextColor="#94a3b8"
+        {...props}
       />
-      {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    width: '100%',
   },
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1f2937',
+    color: '#334155',
     marginBottom: 4,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    height: 48,
+    backgroundColor: '#f8fafc',
     borderRadius: 8,
-    padding: 12,
+    paddingHorizontal: 44,
     fontSize: 16,
-  },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  error: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
+    color: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
 });
