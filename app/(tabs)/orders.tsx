@@ -7,8 +7,10 @@ import {
   RefreshControl,
   ActivityIndicator,
   Image,
+  Pressable,
 } from 'react-native';
-import { Package2, Calendar, DollarSign } from 'lucide-react-native';
+import { Package2, Calendar, DollarSign, Store } from 'lucide-react-native';
+import { router } from 'expo-router';
 import apiz from '../services/api';
 
 interface Purchase {
@@ -31,7 +33,7 @@ export default function Orders() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaUrl = 'http://192.168.6.32:8000/storage/';
+  const mediaUrl = 'http://192.168.89.32:8000/storage/';
 
   const fetchOrders = async () => {
     try {
@@ -61,6 +63,13 @@ export default function Orders() {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+    });
+  };
+
+  const navigateToShop = (shopId: number) => {
+    router.push({
+      pathname: '/shop/profile-shop/[id]',
+      params: { id: shopId },
     });
   };
 
@@ -99,6 +108,28 @@ export default function Orders() {
         ) : (
           orders.map((order) => (
             <View key={order.id} style={styles.orderCard}>
+              <Pressable
+                style={styles.shopHeader}
+                onPress={() =>
+                  order.shop ? navigateToShop(order.shop.id) : null
+                } // Only navigate if shop exists
+              >
+                <View style={styles.shopInfo}>
+                  {order.shop?.logo ? (
+                    <Image
+                      source={{ uri: mediaUrl + order.shop.image_url }}
+                      style={styles.shopLogo}
+                    />
+                  ) : (
+                    <Store size={20} color="#64748b" />
+                  )}
+                  <Text style={styles.shopName}>
+                    {order.shop?.lastname || 'Unknown Shop'}
+                  </Text>
+                </View>
+                {order.shop && <Text style={styles.viewShop}>View Shop</Text>}
+              </Pressable>
+
               <View style={styles.orderHeader}>
                 <View style={styles.statusContainer}>
                   <Text
@@ -170,44 +201,101 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  orderCard: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 12,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 3,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#64748b',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#94a3b8',
+    marginTop: 8,
+  },
+  orderCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  shopHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+  },
+  shopInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  shopLogo: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  shopName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1e293b',
+    marginLeft: 8,
+  },
+  viewShop: {
+    fontSize: 14,
+    color: '#2563eb',
+    fontWeight: '500',
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
   statusContainer: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   statusCompleted: {
     color: '#059669',
-    backgroundColor: '#d1fae5',
   },
   statusPending: {
     color: '#d97706',
-    backgroundColor: '#fef3c7',
   },
   statusCancelled: {
     color: '#dc2626',
-    backgroundColor: '#fee2e2',
   },
   orderMeta: {
     flexDirection: 'row',
@@ -215,25 +303,25 @@ const styles = StyleSheet.create({
   },
   dateText: {
     marginLeft: 6,
-    color: '#64748b',
     fontSize: 14,
+    color: '#64748b',
   },
   productContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    padding: 12,
   },
   productImage: {
     width: 80,
     height: 80,
     borderRadius: 8,
-    marginRight: 12,
   },
   productInfo: {
     flex: 1,
+    marginLeft: 12,
   },
   productName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#1e293b',
     marginBottom: 8,
   },
@@ -254,35 +342,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#2563eb',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  errorText: {
-    color: '#ef4444',
-    textAlign: 'center',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#64748b',
-    marginTop: 16,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginTop: 8,
+    marginLeft: 4,
   },
 });

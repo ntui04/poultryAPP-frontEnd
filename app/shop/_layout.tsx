@@ -49,5 +49,6 @@ export default function ShopLayout() {
         }} 
       />
     </Stack>
+    
   );
 }

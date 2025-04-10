@@ -1,39 +1,83 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, TextInput } from 'react-native';
+import { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  Image, 
+  Pressable, 
+  TextInput,
+  ActivityIndicator,
+  RefreshControl 
+} from 'react-native';
 import { router } from 'expo-router';
 import { Search, Star, Clock, PlusCircle } from 'lucide-react-native';
+import { consultantsApi } from '../services/api';
+
+interface Consultant {
+  id: string;
+  name: string;
+  specialization: string;
+  image: string;
+  rating: number;
+  reviews: number;
+  experience: string;
+  education: string;
+  nextAvailable: string;
+}
 
 export default function ConsultantsHome() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [consultants, setConsultants] = useState<Consultant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const consultants = [
-    {
-      id: '1',
-      name: 'Dr. Sarah Wilson',
-      specialization: 'Poultry Health Specialist',
-      experience: '8 years',
-      rating: 4.8,
-      reviews: 156,
-      image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2',
-      consultationFee: 2500,
-      nextAvailable: 'Today, 2:30 PM',
-      education: 'DVM, University of Nairobi',
-      isAvailable: true,
-    },
-    {
-      id: '2',
-      name: 'Dr. John Carter',
-      specialization: 'Avian Medicine Expert',
-      experience: '12 years',
-      rating: 4.9,
-      reviews: 203,
-      image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d',
-      consultationFee: 3000,
-      nextAvailable: 'Tomorrow, 10:00 AM',
-      education: 'DVM, PhD in Avian Pathology',
-      isAvailable: false,
-    },
-  ];
+  const fetchConsultants = async () => {
+    try {
+      setError(null);
+      const response = await consultantsApi.getAll();
+      setConsultants(response.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to fetch consultants');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchConsultants();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchConsultants();
+    setRefreshing(false);
+  };
+
+  const filteredConsultants = consultants.filter(consultant =>
+    consultant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    consultant.specialization.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Pressable style={styles.retryButton} onPress={fetchConsultants}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -42,7 +86,6 @@ export default function ConsultantsHome() {
           <Text style={styles.pageTitle}>Veterinary Consultants</Text>
           <Pressable 
             style={styles.addConsultantButton}
-            // ADMIN SECTION
             onPress={() => router.push('/consultants/add')}
           >
             <PlusCircle size={24} color="#2563eb" />
@@ -57,61 +100,75 @@ export default function ConsultantsHome() {
             placeholder="Search veterinarians..."
             value={searchQuery}
             onChangeText={setSearchQuery}
+            placeholderTextColor="#94a3b8"
           />
         </View>
       </View>
 
-      <ScrollView style={styles.consultantList}>
-        {consultants.map((consultant) => (
-          <Pressable
-            key={consultant.id}
-            style={styles.consultantCard}
-            onPress={() => router.push(`/consultants/profile/${consultant.id}`)}
-          >
-            <View style={styles.cardHeader}>
-              <Image source={{ uri: consultant.image }} style={styles.consultantImage} />
-              <View style={styles.headerInfo}>
-                <Text style={styles.consultantName}>{consultant.name}</Text>
-                <Text style={styles.specialization}>{consultant.specialization}</Text>
-                <View style={styles.ratingContainer}>
-                  <Star size={16} color="#eab308" fill="#eab308" />
-                  <Text style={styles.rating}>{consultant.rating}</Text>
-                  <Text style={styles.reviews}>({consultant.reviews} reviews)</Text>
-                </View>
-              </View>
-            </View>
+      <ScrollView 
+        style={styles.consultantList}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {filteredConsultants.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No consultants found</Text>
+          </View>
+        ) : (
+          filteredConsultants.map((consultant) => (
+            <Pressable
+              key={consultant.id}
+              style={styles.consultantCard}
+              onPress={() => router.push(`/userprofile/consultants/profile/${consultant.id}`)}
 
-            <View style={styles.cardContent}>
-              <View style={styles.infoRow}>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Experience</Text>
-                  <Text style={styles.infoValue}>{consultant.experience}</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Education</Text>
-                  <Text style={styles.infoValue}>{consultant.education}</Text>
+            >
+              <View style={styles.cardHeader}>
+                <Image source={{ uri: consultant.image }} style={styles.consultantImage} />
+                <View style={styles.headerInfo}>
+                  <Text style={styles.consultantName}>{consultant.name}</Text>
+                  <Text style={styles.specialization}>{consultant.specialization}</Text>
+                  <View style={styles.ratingContainer}>
+                    <Star size={16} color="#eab308" fill="#eab308" />
+                    <Text style={styles.rating}>{consultant.rating}</Text>
+                    <Text style={styles.reviews}>({consultant.reviews} reviews)</Text>
+                  </View>
                 </View>
               </View>
 
-              <View style={styles.availabilityContainer}>
-                <View style={styles.availabilityInfo}>
-                  <Clock size={16} color="#64748b" />
-                  <Text style={styles.nextAvailable}>Next available: {consultant.nextAvailable}</Text>
+              <View style={styles.cardContent}>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Experience</Text>
+                    <Text style={styles.infoValue}>{consultant.experience}</Text>
+                  </View>
+                  <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Education</Text>
+                    <Text style={styles.infoValue}>{consultant.education}</Text>
+                  </View>
                 </View>
-                <Pressable
-                  style={styles.viewProfileButton}
-                  onPress={() => router.push(`/consultants/profile/${consultant.id}`)}
-                >
-                  <Text style={styles.viewProfileButtonText}>View Profile</Text>
-                </Pressable>
+
+                <View style={styles.availabilityContainer}>
+                  <View style={styles.availabilityInfo}>
+                    <Clock size={16} color="#64748b" />
+                    <Text style={styles.nextAvailable}>Next available: {consultant.nextAvailable}</Text>
+                  </View>
+                  <Pressable
+                    style={styles.viewProfileButton}
+                    onPress={() => router.push(`/consultants/profile/${consultant.id}`)}
+                  >
+                    <Text style={styles.viewProfileButtonText}>View Profile</Text>
+                  </Pressable>
+                </View>
               </View>
-            </View>
-          </Pressable>
-        ))}
+            </Pressable>
+          ))
+        )}
       </ScrollView>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -263,5 +320,43 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
   },
 });

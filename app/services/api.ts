@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const apiz = axios.create({
-  baseURL: 'http://192.168.36.32:8000/api',
+  baseURL: 'http://192.168.89.32:8000/api',
   timeout: 10000,
 })
 
@@ -56,6 +56,26 @@ export const statisticsApi = {
   getMonthlyGrowth: () => apiz.get('/statistics/monthly-growth'),
   getRecentActivity: () => apiz.get('/statistics/recent-activity'),
 };
+
+
+export const consultantsApi = {
+  getAll: () => apiz.get('/consultants'),
+  getOne: (id: string) => apiz.get(`/consultants/${id}`),
+  create: (data: any) => {
+    const headers = {
+      'Content-Type': 'multipart/form-data',
+    };
+    return apiz.post('/consultants', data, { headers });
+  },
+  update: (id: string, data: any) => apiz.put(`/consultants/${id}`, data),
+  delete: (id: string) => apiz.delete(`/consultants/${id}`),
+};
+
+
+export const shopsApi = {
+  getOne: (id: number) => apiz.get(`/shops/${id}`),
+};
+
 
 
 export default apiz;
