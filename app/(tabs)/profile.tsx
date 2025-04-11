@@ -41,14 +41,20 @@ const Profile = () => {
           text: "Logout", 
           onPress: async () => {
             try {
-              await logout(); // Clear local state first
-              const success = await AuthService.logout(); // Now properly awaited
+              // Call the service first, which will make API call and clear storage
+              await AuthService.logout();
               
-              // This will always redirect, but you could add logic if needed
+              // Then update the app state
+              logout();
+              
+              // Navigate to login
               router.replace('/auth/login');
-              
             } catch (error) {
               console.error("Logout error:", error);
+              
+              // If there was an error, we should still let the user logout
+              // from the local app state
+              logout();
               router.replace('/auth/login');
             }
           },
@@ -57,6 +63,7 @@ const Profile = () => {
       ]
     );
   };
+
   const profileOptions = [
     {
       id: 'personal',
