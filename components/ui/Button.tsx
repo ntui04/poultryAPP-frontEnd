@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 24,
+    width: 150,
   },
   buttonDisabled: {
     backgroundColor: '#94a3b8',

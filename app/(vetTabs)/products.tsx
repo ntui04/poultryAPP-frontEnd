@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Pressable, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Pressable, TextInput, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Search, Plus, CreditCard as Edit2, Trash2 } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
@@ -10,59 +10,82 @@ import { Path } from 'react-native-svg';
 
 export default function Products() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [shopData, setShopData] = useState<shopData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
 
-    const [refreshing, setRefreshing] = useState(false);
-    const [shopData, setShopData] = useState<shopData[]>([]); // Initialize as an empty array
-    const [loading, setLoading] = useState(true);
-    const [token, setToken] = useState(null);
+  const mediaUrl = 'http://192.168.239.32:8000/storage/';
 
-
-    const mediaUrl = 'http://192.168.239.32:8000/storage/';
-    useEffect(() => {
-      const fetchToken = async () => {
-        try {
-          const storedToken = await AsyncStorage.getItem('token');
-          if (storedToken) {
-            setToken(storedToken);
-          } else {
-            console.error('No token found in AsyncStorage');
-          }
-        } catch (error) {
-          console.error('Error fetching token from AsyncStorage:', error);
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem('token');
+        if (storedToken) {
+          setToken(storedToken);
+        } else {
+          console.error('No token found in AsyncStorage');
         }
-      };
-  
-      fetchToken();
-    }, []);
-  
-    useEffect(() => {
-      const fetchShopData = async () => {
-        setLoading(true);
-        try {
-          const response = await apiz.get('/products',{
-            headers:{Authorization: `Bearer ${token}`}
-          })
-    
-          console.log("API Response:", response.data);
-    
-          // Update state with the fetched data
-          setShopData(response.data);
-        } catch (error) {
-          console.error('Error fetching shop data:', error.response?.data || error.message);
-          setLoading(false);
-        } finally {
-          setLoading(false);
-        }
-      };
+      } catch (error) {
+        console.error('Error fetching token from AsyncStorage:', error);
+      }
+    };
+
+    fetchToken();
+  }, []);
+
+  const fetchShopData = async () => {
+    setLoading(true);
+    try {
+      const response = await apiz.get('/products', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setShopData(response.data);
+    } catch (error) {
+      console.error('Error fetching shop data:', error.response?.data || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
       fetchShopData();
-    }, [token]);
-  
-    
-              
+    }
+  }, [token]);
 
-  const handleDelete = (productId: number) => {
-    // Implement delete logic
-    console.log('Delete product:', productId);
+  const handleDelete = async (productId: number) => {
+    Alert.alert(
+      "Delete Product",
+      "Are you sure you want to delete this product?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await apiz.delete(`/products/${productId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              
+              Alert.alert("Success", "Product deleted successfully");
+              // Refresh the product list
+              fetchShopData();
+            } catch (error) {
+              console.error('Error deleting product:', error.response?.data || error.message);
+              Alert.alert(
+                "Error",
+                error.response?.data?.message || "Failed to delete product"
+              );
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -88,7 +111,7 @@ export default function Products() {
       <ScrollView style={styles.productList}>
         {shopData.map((product) => (
           <View key={product.id} style={styles.productCard}>
-            <Image source={{ uri:mediaUrl + product.image }} style={styles.productImage} />
+            <Image source={{ uri: mediaUrl + product.image }} style={styles.productImage} />
             <View style={styles.productInfo}>
               <View style={styles.productHeader}>
                 <View>
@@ -131,25 +154,27 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
+    gap: 12,
+  },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
     borderRadius: 8,
-    padding: 8,
-    marginBottom: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
+    height: 40,
     fontSize: 16,
-    color: '#1f2937',
   },
   buttonContent: {
     flexDirection: 'row',
@@ -158,8 +183,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '500',
   },
   productList: {
     padding: 16,
@@ -169,15 +194,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   productImage: {
     width: '100%',
     height: 200,
+    resizeMode: 'cover',
   },
   productInfo: {
     padding: 16,
@@ -186,7 +207,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   productName: {
     fontSize: 18,
@@ -209,14 +230,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 8,
   },
   productPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#2563eb',
-  },
-  productStock: {
-    fontSize: 14,
-    color: '#64748b',
   },
 });

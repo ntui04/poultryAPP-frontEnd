@@ -22,19 +22,27 @@ apiz.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
 export const articlesApi = {
-  getAll: () => apiz.get('/articles'),
+  // Normal users: see all articles (e.g. for viewing)
+  getAllPublic: () => apiz.get('/articles'),
+
+  // Consultants: see only their own posts (e.g. for managing)
+  getAllByConsultant: () => apiz.get('/articles/consl'),
+
   getOne: (id: string) => apiz.get(`/articles/${id}`),
+
   create: (data: any) => {
     const headers = {
       'Content-Type': 'multipart/form-data',
     };
-    return apiz.post('/articles/post', data, { headers });
+    return apiz.post('/articles', data, { headers });
   },
+
   update: (id: string, data: any) => apiz.put(`/articles/${id}`, data),
+
   delete: (id: string) => apiz.delete(`/articles/${id}`),
 };
+
 
 export const productsApi = {
   getAll: () => apiz.get('/products/farm'),
