@@ -37,7 +37,7 @@ export default function Education() {
   const fetchArticles = async () => {
     try {
       setError(null);
-      const response = await articlesApi.getAll();
+      const response = await articlesApi.getAllPublic(); // 👈 for public view
       setArticles(response.data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch articles');
@@ -45,7 +45,7 @@ export default function Education() {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchArticles();
   }, []);

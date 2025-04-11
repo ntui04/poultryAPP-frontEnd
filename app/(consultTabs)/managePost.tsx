@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';                    
 import { 
   View, 
   Text, 
   StyleSheet, 
-  FlatList, 
+  ScrollView, 
+  Image, 
   Pressable, 
-  TextInput, 
-  Modal, 
-  Alert,
-  ActivityIndicator 
+  TextInput,
+  ActivityIndicator,
+  RefreshControl,
+  TouchableOpacity
 } from 'react-native';
 import { router } from 'expo-router';
-import { CreditCard as Edit, Trash2, CirclePlus as PlusCircle, Search } from 'lucide-react-native';
+import { Search, BookOpen, CirclePlay as PlayCircle } from 'lucide-react-native';
 import { articlesApi } from '../services/api';
 
 interface Article {
@@ -24,126 +25,75 @@ interface Article {
   created_at?: string;
 }
 
-export default function ManagePosts() {
-  const [posts, setPosts] = useState<Article[]>([]);
+
+export default function Education() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPost, setSelectedPost] = useState<Article | null>(null);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPosts = async () => {
+  const mediaUrl = 'http://192.168.6.32:8000/storage/';
+
+  const fetchArticles = async () => {
     try {
-      setLoading(true);
       setError(null);
-      const response = await articlesApi.getAll();
-      setPosts(response.data);
+      const response = await articlesApi.getAllPublic(); // 👈 for public view
+      setArticles(response.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch posts');
-      Alert.alert('Error', 'Failed to fetch posts');
+      setError(err.response?.data?.message || 'Failed to fetch articles');
     } finally {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
-    fetchPosts();
+    fetchArticles();
   }, []);
 
-  const handleDelete = async () => {
-    if (selectedPost) {
-      try {
-        await articlesApi.delete(selectedPost.id);
-        setPosts(posts.filter(post => post.id !== selectedPost.id));
-        setIsDeleteModalVisible(false);
-        setSelectedPost(null);
-        Alert.alert('Success', 'Post deleted successfully');
-      } catch (err: any) {
-        Alert.alert('Error', err.response?.data?.message || 'Failed to delete post');
-      }
-    }
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchArticles();
+    setRefreshing(false);
   };
 
-  const filteredPosts = posts.filter(post => 
-    post.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredArticles = articles.filter(article =>
+    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    article.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+  const getReadTime = (content: string) => {
+    const wordsPerMinute = 200;
+    const words = content.split(/\s+/).length;
+    const minutes = Math.ceil(words / wordsPerMinute);
+    return `${minutes} min read`;
   };
-
-  const renderPostItem = ({ item }: { item: Article }) => (
-    <View style={styles.postCard}>
-      <View style={styles.postInfo}>
-        <Text style={styles.postTitle}>{item.title}</Text>
-        <Text style={styles.postDetails}>
-          By {item.author} | {formatDate(item.created_at)}
-        </Text>
-        <Text style={styles.category}>{item.category}</Text>
-      </View>
-      <View style={styles.actionButtons}>
-        <Pressable 
-          style={styles.editButton}
-          onPress={() => router.push(`/articles/edit/${item.id}`)}
-        >
-          <Edit size={20} color="#2563eb" />
-        </Pressable>
-        <Pressable 
-          style={styles.deleteButton}
-          onPress={() => {
-            setSelectedPost(item);
-            setIsDeleteModalVisible(true);
-          }}
-        >
-          <Trash2 size={20} color="#ef4444" />
-        </Pressable>
-      </View>
-    </View>
-  );
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <Pressable style={styles.retryButton} onPress={fetchPosts}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </Pressable>
-      </View>
-    );
-  }
 
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Text style={styles.pageTitle}>Manage Posts</Text>
-          <Pressable 
-            style={styles.addPostButton}
-            onPress={() => router.push('/articles/addArticle')}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <Text style={styles.title}>Learn & Grow</Text>
+          <TouchableOpacity 
+            onPress={() => router.push('/articles/managepost/PostManage')} 
+            style={{ flexDirection: 'row', alignItems: 'center' }}
           >
-            <PlusCircle size={24} color="#2563eb" />
-            <Text style={styles.addPostText}>Add Post</Text>
-          </Pressable>
+            <PlayCircle size={20} color="#2563eb" style={{ marginRight: 8 }} />
+            <Text style={{ color: '#2563eb', fontSize: 16, fontWeight: '500' }}>
+              Manage Articles
+            </Text>
+          </TouchableOpacity>
         </View>
-
         <View style={styles.searchContainer}>
           <Search size={20} color="#64748b" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search posts..."
+            placeholder="Search courses and articles..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#94a3b8"
@@ -151,46 +101,50 @@ export default function ManagePosts() {
         </View>
       </View>
 
-      <FlatList
-        data={filteredPosts}
-        renderItem={renderPostItem}
-        keyExtractor={item => item.id}
-        style={styles.postList}
-        contentContainerStyle={styles.postListContent}
-        refreshing={loading}
-        onRefresh={fetchPosts}
-      />
 
-      <Modal
-        visible={isDeleteModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsDeleteModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Confirm Delete</Text>
-            <Text style={styles.modalMessage}>
-              Are you sure you want to delete the post "{selectedPost?.title}"?
-            </Text>
-            <View style={styles.modalButtons}>
-              <Pressable 
-                style={styles.modalCancelButton}
-                onPress={() => setIsDeleteModalVisible(false)}
-              >
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable 
-                style={styles.modalDeleteButton}
-                onPress={handleDelete}
-              >
-                <Text style={styles.modalDeleteText}>Delete</Text>
-              </Pressable>
-            </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Latest Articles</Text>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#2563eb" />
           </View>
-        </View>
-      </Modal>
-    </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <Pressable style={styles.retryButton} onPress={fetchArticles}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : filteredArticles.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No articles found</Text>
+          </View>
+        ) : (
+          filteredArticles.map((article) => (
+            <Pressable
+              key={article.id}
+              style={styles.articleCard}
+              onPress={() => router.push(`/articles/${article.id}`)}>
+                {/* /articles/edit/${item.id}`) */}
+              <Image 
+                source={{uri:mediaUrl + article.image_url}}  style={styles.articleImage} />
+                 {/* <Image source={{ uri:mediaUrl + product.image }} style={styles.productImage}  */}
+              <View style={styles.articleInfo}>
+                <View style={styles.categoryContainer}>
+                  <Text style={styles.category}>{article.category}</Text>
+                </View>
+                <Text style={styles.articleTitle}>{article.title}</Text>
+                <Text style={styles.articleAuthor}>By {article.author}</Text>
+                <View style={styles.articleMeta}>
+                  <BookOpen size={16} color="#64748b" />
+                  <Text style={styles.readTime}>{getReadTime(article.content)}</Text>
+                </View>
+              </View>
+            </Pressable>
+          ))
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -199,67 +153,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#ef4444',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   header: {
+    padding: 24,
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    paddingBottom: 16,
   },
-  headerContent: {
-    paddingTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  pageTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#1f2937',
-  },
-  addPostButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    marginLeft: 10,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
-
-  },
-  addPostText: {
-    color: '#2563eb',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 10,
+    marginBottom: 16,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -267,7 +169,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     borderRadius: 8,
     padding: 12,
-    marginHorizontal: 16,
   },
   searchIcon: {
     marginRight: 8,
@@ -277,109 +178,149 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1f2937',
   },
-  postList: {
-    padding: 16,
+  section: {
+    padding: 24,
   },
-  postListContent: {
-    paddingBottom: 16,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 16,
   },
-  postCard: {
+  courseCard: {
+    width: 280,
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    marginRight: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
-  postInfo: {
-    flex: 1,
-    marginRight: 16,
+  courseImage: {
+    width: '100%',
+    height: 160,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
-  postTitle: {
+  courseInfo: {
+    padding: 16,
+  },
+  courseTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 4,
   },
-  postDetails: {
+  instructor: {
     fontSize: 14,
     color: '#64748b',
-    marginBottom: 4,
+    marginTop: 4,
   },
-  category: {
-    fontSize: 14,
-    color: '#2563eb',
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
+  courseMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
   },
-  actionButtons: {
+  duration: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
   },
-  editButton: {
-    padding: 8,
+  durationText: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: '#64748b',
   },
-  deleteButton: {
-    padding: 8,
+  rating: {
+    fontSize: 14,
+    color: '#eab308',
+    fontWeight: '500',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
+  articleCard: {
+    flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 24,
-    width: '85%',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  articleImage: {
+    width: 120,
+    height: 140,
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+  },
+  articleInfo: {
+    flex: 1,
+    padding: 16,
+  },
+  categoryContainer: {
+    marginBottom: 8,
+  },
+  category: {
+    backgroundColor: '#eff6ff',
+    color: '#2563eb',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    fontSize: 12,
+    fontWeight: '500',
+    alignSelf: 'flex-start',
+  },
+  articleTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  articleAuthor: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 8,
+  },
+  articleMeta: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 16,
-    color: '#1f2937',
-  },
-  modalMessage: {
-    fontSize: 16,
-    marginBottom: 24,
-    textAlign: 'center',
+  readTime: {
+    marginLeft: 4,
+    fontSize: 14,
     color: '#64748b',
   },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
   },
-  modalCancelButton: {
+  errorContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#ef4444',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#2563eb',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#f3f4f6',
   },
-  modalCancelText: {
-    color: '#1f2937',
-    fontWeight: '600',
+  retryButtonText: {
+    color: '#ffffff',
+    fontWeight: '500',
   },
-  modalDeleteButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#ef4444',
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
   },
-  modalDeleteText: {
-    color: '#fff',
-    fontWeight: '600',
+  emptyText: {
+    color: '#64748b',
+    fontSize: 16,
   },
 });
