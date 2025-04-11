@@ -39,7 +39,7 @@ export default function Products() {
       const fetchShopData = async () => {
         setLoading(true);
         try {
-          const response = await apiz.get('/products/farm',{
+          const response = await apiz.get('/products',{
             headers:{Authorization: `Bearer ${token}`}
           })
     

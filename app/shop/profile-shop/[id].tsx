@@ -186,9 +186,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 500,
+    height: 400,
+    borderRadius: 10,
     marginBottom: 16,
   },
   businessName: {
