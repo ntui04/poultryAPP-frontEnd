@@ -120,19 +120,19 @@ const Profile = () => {
       id: 'help',
       title: 'Help Center',
       icon: <HelpCircle size={20} color="#2563eb" />,
-      onPress: () => router.push('/'),
+      onPress: () => router.push('/support/HelpCenter'),
     },
     {
       id: 'terms',
       title: 'Terms & Conditions',
       icon: <FileText size={20} color="#2563eb" />,
-      onPress: () => router.push('/'),
+      onPress: () => router.push('/support/Terms'),
     },
     {
       id: 'privacy',
       title: 'Privacy Policy',
       icon: <FileText size={20} color="#2563eb" />,
-      onPress: () => router.push('/'),
+      onPress: () => router.push('/support/Privacy'),
     }
   ];
 
