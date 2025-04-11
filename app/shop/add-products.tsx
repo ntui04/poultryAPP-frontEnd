@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Alert, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  Alert,
+  Image,
+} from 'react-native';
 import { router } from 'expo-router';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -18,16 +26,20 @@ export default function AddProduct() {
   });
   const [image, setImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const {token } = useLocalSearchParams();
+  const { token } = useLocalSearchParams();
 
   // Fetch token when component mounts
 
-console.log(token)
+  console.log(token);
   // Function to pick an image from the gallery
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert('Permission Denied', 'You need to allow access to the gallery to upload an image.');
+      Alert.alert(
+        'Permission Denied',
+        'You need to allow access to the gallery to upload an image.'
+      );
       return;
     }
 
@@ -44,13 +56,21 @@ console.log(token)
   };
 
   const handleSubmit = async () => {
-    if (!formData.product_name || !formData.description || !formData.price || !image) {
+    if (
+      !formData.product_name ||
+      !formData.description ||
+      !formData.price ||
+      !image
+    ) {
       Alert.alert('Error', 'Please fill in all required fields.');
       return;
     }
 
     if (!token) {
-      Alert.alert('Error', 'Authentication token missing. Please log in again.');
+      Alert.alert(
+        'Error',
+        'Authentication token missing. Please log in again.'
+      );
       return;
     }
 
@@ -61,6 +81,7 @@ console.log(token)
       data.append('product_name', formData.product_name);
       data.append('description', formData.description);
       data.append('price', formData.price);
+      data.append('stock_quantity', formData.stock_quantity);
       data.append('image', {
         uri: image,
         name: 'product_image.jpg',
@@ -70,15 +91,22 @@ console.log(token)
       const response = await apiz.post('/products/add', data, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       Alert.alert('Success', 'Product added successfully!');
       router.back();
     } catch (error) {
-      console.error('Error adding product:', error.response?.data || error.message);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to add product. Please try again.');
+      console.error(
+        'Error adding product:',
+        error.response?.data || error.message
+      );
+      Alert.alert(
+        'Error',
+        error.response?.data?.message ||
+          'Failed to add product. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +118,9 @@ console.log(token)
         <Input
           label="Product Name"
           value={formData.product_name}
-          onChangeText={(text) => setFormData({ ...formData, product_name: text })}
+          onChangeText={(text) =>
+            setFormData({ ...formData, product_name: text })
+          }
           placeholder="Enter product name"
         />
 
@@ -99,7 +129,9 @@ console.log(token)
           <TextInput
             style={styles.textarea}
             value={formData.description}
-            onChangeText={(text) => setFormData({ ...formData, description: text })}
+            onChangeText={(text) =>
+              setFormData({ ...formData, description: text })
+            }
             placeholder="Enter product description"
             multiline
             numberOfLines={4}
@@ -114,10 +146,20 @@ console.log(token)
           keyboardType="numeric"
         />
 
+        <Input
+          label="stock quantity"
+          value={formData.stock_quantity}
+          onChangeText={(text) => setFormData({ ...formData, stock_quantity: text })}
+          placeholder="Enter quantity"
+          keyboardType="numeric"
+        />
+
         {/* Image Picker */}
         <View style={styles.imagePicker}>
           <Button onPress={pickImage}>Pick an Image</Button>
-          {image && <Image source={{ uri: image }} style={styles.imagePreview} />}
+          {image && (
+            <Image source={{ uri: image }} style={styles.imagePreview} />
+          )}
         </View>
 
         <View style={styles.btnAdd}>
@@ -128,7 +170,7 @@ console.log(token)
       </View>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
