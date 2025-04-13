@@ -37,7 +37,7 @@ export default function Education() {
   const fetchArticles = async () => {
     try {
       setError(null);
-      const response = await articlesApi.getAll();
+      const response = await articlesApi.getAllPublic();
       setArticles(response.data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch articles');
