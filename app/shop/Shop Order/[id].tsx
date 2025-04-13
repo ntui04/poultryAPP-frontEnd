@@ -49,7 +49,7 @@ export default function OrderDetails() {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaUrl = 'http://192.168.36.32:8000/storage/';
+  const mediaUrl = 'http://192.168.90.32:8000/storage/';
 
   useEffect(() => {
     fetchOrder();

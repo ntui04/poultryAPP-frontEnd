@@ -17,6 +17,8 @@ export default function ConsultantProfile() {
   const [consultant, setConsultant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const mediaUrl = 'http://192.168.82.32:8000/storage/';
+
 
   const fetchConsultant = async () => {
     try {
@@ -53,7 +55,7 @@ export default function ConsultantProfile() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Image source={{ uri: consultant.image }} style={styles.profileImage} />
+      <Image source={{ uri:mediaUrl + consultant.image }} style={styles.profileImage} />
 
       <Text style={styles.name}>{consultant.name}</Text>
       <Text style={styles.specialization}>{consultant.specialization}</Text>

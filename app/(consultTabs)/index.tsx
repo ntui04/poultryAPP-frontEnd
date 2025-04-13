@@ -33,6 +33,9 @@ export default function ConsultantsHome() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const mediaUrl = 'http://192.168.82.32:8000/storage/';
+
+
   const fetchConsultants = async () => {
     try {
       setError(null);
@@ -79,6 +82,8 @@ export default function ConsultantsHome() {
     );
   }
 
+  console.log(consultants)
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -124,7 +129,7 @@ export default function ConsultantsHome() {
 
             >
               <View style={styles.cardHeader}>
-                <Image source={{ uri: consultant.image }} style={styles.consultantImage} />
+                <Image source={{ uri:mediaUrl + consultant.image }} style={styles.consultantImage} />
                 <View style={styles.headerInfo}>
                   <Text style={styles.consultantName}>{consultant.name}</Text>
                   <Text style={styles.specialization}>{consultant.specialization}</Text>

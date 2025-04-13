@@ -1,6 +1,6 @@
 // screens/welcome/TestimonyScreen.jsx
 import { View, Text, StyleSheet, ScrollView, Image, Pressable, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 
 export default function TestimonyScreen() {

@@ -54,7 +54,7 @@ export default function Register() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Image
             source={{
@@ -70,85 +70,79 @@ export default function Register() {
         <View style={styles.form}>
           {error && <Text style={styles.error}>{error}</Text>}
 
-          <View style={styles.inputContainer}>
-            <User size={20} color="#64748b" style={styles.inputIcon} />
-            <Input
-              label="First Name"
-              value={formData.firstname}
-              onChangeText={(text) =>
-                setFormData({ ...formData, firstname: text })
-              }
-              placeholder="Enter your first name"
-            />
+          <View style={styles.row}>
+            <View style={styles.column}>
+              <Input
+                label="First Name"
+                value={formData.firstname}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, firstname: text })
+                }
+                placeholder="Enter first name"
+                icon={<User size={20} color="#64748b" />}
+              />
+            </View>
+            <View style={styles.column}>
+              <Input
+                label="Last Name"
+                value={formData.lastname}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, lastname: text })
+                }
+                placeholder="Enter last name"
+                icon={<User size={20} color="#64748b" />}
+              />
+            </View>
           </View>
 
-          <View style={styles.inputContainer}>
-            <User size={20} color="#64748b" style={styles.inputIcon} />
-            <Input
-              label="Last Name"
-              value={formData.lastname}
-              onChangeText={(text) =>
-                setFormData({ ...formData, lastname: text })
-              }
-              placeholder="Enter your last name"
-            />
-          </View>
+          <Input
+            label="Phone Number"
+            value={formData.phone_number}
+            onChangeText={(text) =>
+              setFormData({ ...formData, phone_number: text })
+            }
+            placeholder="Enter phone number"
+            keyboardType="phone-pad"
+            icon={<Phone size={20} color="#64748b" />}
+          />
 
-          <View style={styles.inputContainer}>
-            <Phone size={20} color="#64748b" style={styles.inputIcon} />
-            <Input
-              label="Phone Number"
-              value={formData.phone_number}
-              onChangeText={(text) =>
-                setFormData({ ...formData, phone_number: text })
-              }
-              placeholder="Enter your phone number"
-              keyboardType="phone-pad"
-            />
-          </View>
+          <Input
+            label="Location"
+            value={formData.location}
+            onChangeText={(text) =>
+              setFormData({ ...formData, location: text })
+            }
+            placeholder="Enter location"
+            icon={<MapPin size={20} color="#64748b" />}
+          />
 
-          <View style={styles.inputContainer}>
-            <MapPin size={20} color="#64748b" style={styles.inputIcon} />
-            <Input
-              label="Location"
-              value={formData.location}
-              onChangeText={(text) =>
-                setFormData({ ...formData, location: text })
-              }
-              placeholder="Enter your location"
-            />
-          </View>
+          <Input
+            label="Password"
+            value={formData.password}
+            onChangeText={(text) =>
+              setFormData({ ...formData, password: text })
+            }
+            placeholder="Create password (min. 6 characters)"
+            secureTextEntry
+            icon={<Lock size={20} color="#64748b" />}
+          />
 
-          <View style={styles.inputContainer}>
-            <Lock size={20} color="#64748b" style={styles.inputIcon} />
-            <Input
-              label="Password"
-              value={formData.password}
-              onChangeText={(text) =>
-                setFormData({ ...formData, password: text })
-              }
-              placeholder="Create a password (min. 6 characters)"
-              secureTextEntry
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Lock size={20} color="#64748b" style={styles.inputIcon} />
-            <Input
-              label="Confirm Password"
-              value={formData.password_confirmation}
-              onChangeText={(text) =>
-                setFormData({ ...formData, password_confirmation: text })
-              }
-              placeholder="Confirm your password"
-              secureTextEntry
-            />
-          </View>
+          <Input
+            label="Confirm Password"
+            value={formData.password_confirmation}
+            onChangeText={(text) =>
+              setFormData({ ...formData, password_confirmation: text })
+            }
+            placeholder="Confirm password"
+            secureTextEntry
+            icon={<Lock size={20} color="#64748b" />}
+          />
 
           <Button
             onPress={handleRegister}
             loading={isLoading}
             disabled={!isFormValid()}
+            style={styles.button}
           >
             Create Account
           </Button>
@@ -209,15 +203,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  inputContainer: {
+  row: {
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 16,
-    position: 'relative',
   },
-  inputIcon: {
-    position: 'absolute',
-    left: 12,
-    top: 38,
-    zIndex: 1,
+  column: {
+    flex: 1,
+  },
+  button: {
+    marginTop: 8,
+    width: '100%',
   },
   footer: {
     flexDirection: 'row',

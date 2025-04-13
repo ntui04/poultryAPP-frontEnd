@@ -33,7 +33,7 @@ export default function ArticleScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
 
-  const mediaUrl = 'http://192.168.6.32:8000/storage/';
+  const mediaUrl = 'http://192.168.90.32:8000/storage/';
 
   useEffect(() => {
     fetchArticle();
