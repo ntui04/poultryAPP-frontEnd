@@ -8,6 +8,10 @@ import {
   Pressable,
   RefreshControl,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/auth';
@@ -18,11 +22,31 @@ import {
   ThermometerSun,
   Users,
   Calendar,
+  MessageCircle,
+  Send,
+  X,
 } from 'lucide-react-native';
+
+interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
+}
 
 export default function Home() {
   const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      text: "Hello! I'm your AgroAssistant. How can I help you today?",
+      sender: 'bot',
+      timestamp: new Date(),
+    },
+  ]);
 
   const farmStats = {
     totalBirds: 2500,
@@ -56,12 +80,36 @@ export default function Home() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Implement refresh logic here
     setTimeout(() => setRefreshing(false), 1000);
   };
 
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: message,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setMessage('');
+
+    setTimeout(() => {
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "I'll help you with that. What specific information do you need about your farm?",
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, botMessage]);
+    }, 1000);
+  };
+
   return (
-    <ScrollView
+    <>
+      <ScrollView
       style={styles.container}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -143,7 +191,7 @@ export default function Home() {
           <Pressable
             key={task.id}
             style={styles.taskCard}
-            // onPress={() => router.push(`/task/${task.id}`)}
+            // onPress={() => router.push(/task/${task.id})}
           >
             <View style={styles.taskHeader}>
               <Text style={styles.taskTitle}>{task.title}</Text>
@@ -154,83 +202,100 @@ export default function Home() {
         ))}
       </View>
     </ScrollView>
+
+      {/* FAB */}
+      <TouchableOpacity
+        style={styles.fabButton}
+        onPress={() => setIsChatOpen(true)}
+      >
+        <MessageCircle size={24} color="#fff" />
+      </TouchableOpacity>
+
+      {/* Chat Modal */}
+      <Modal
+        visible={isChatOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsChatOpen(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <View style={styles.chatContainer}>
+            <View style={styles.chatHeader}>
+              <Text style={styles.chatTitle}>AgroAssistant</Text>
+              <TouchableOpacity
+                onPress={() => setIsChatOpen(false)}
+                style={styles.closeButton}
+              >
+                <X size={24} color="#1f2937" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.messagesContainer}>
+              {messages.map((msg) => (
+                <View
+                  key={msg.id}
+                  style={[
+                    styles.messageWrapper,
+                    msg.sender === 'user' ? styles.userMessage : styles.botMessage,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.messageText,
+                      msg.sender === 'user'
+                        ? styles.userMessageText
+                        : styles.botMessageText,
+                    ]}
+                  >
+                    {msg.text}
+                  </Text>
+                  <Text style={styles.messageTime}>
+                    {msg.timestamp.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Type your message..."
+                value={message}
+                onChangeText={setMessage}
+                multiline
+                maxLength={500}
+              />
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={handleSendMessage}
+              >
+                <Send size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 24,
     backgroundColor: '#fff',
-  },
-  greeting: {
-    marginTop: 15,
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  location: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  locationText: {
-    marginLeft: 4,
-    color: '#64748b',
-  },
-  notificationButton: {
-    position: 'relative',
-    padding: 8,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#ef4444',
-  },
-  weatherCard: {
-    margin: 24,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  weatherInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  weatherDetails: {
-    marginLeft: 12,
-  },
-  weatherTemp: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  weatherDesc: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  weatherHumidity: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#64748b',
   },
   statsContainer: {
-    padding: 24,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
   },
   sectionTitle: {
     fontSize: 18,
@@ -300,21 +365,171 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
   },
-  quickActions: {
+  header: {
+    marginTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    padding: 12,
-    marginHorizontal: 4,
     alignItems: 'center',
   },
-  actionText: {
-    color: '#fff',
+  greeting: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  location: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  locationText: {
+    marginLeft: 4,
     fontSize: 14,
-    fontWeight: '500',
+    color: '#64748b',
+  },
+  notificationButton: {
+    position: 'relative',
+    padding: 10,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    backgroundColor: '#ef4444',
+    borderRadius: 4,
+  },
+  weatherCard: {
+    backgroundColor: '#f8fafc',
+    marginHorizontal: 20,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  weatherInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  weatherDetails: {
+    marginLeft: 12,
+  },
+  weatherTemp: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  weatherDesc: {
+    fontSize: 14,
+    color: '#475569',
+  },
+  weatherHumidity: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#64748b',
+  },
+  fabButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    backgroundColor: '#2563eb',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  chatContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    marginTop: 60,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#f8fafc',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  chatTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  closeButton: {
+    padding: 8,
+  },
+  messagesContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  messageWrapper: {
+    maxWidth: '80%',
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 16,
+  },
+  userMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#2563eb',
+  },
+  botMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f1f5f9',
+  },
+  messageText: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  userMessageText: {
+    color: '#fff',
+  },
+  botMessageText: {
+    color: '#1f2937',
+  },
+  messageTime: {
+    fontSize: 12,
+    color: '#64748b',
+    alignSelf: 'flex-end',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    backgroundColor: '#fff',
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    fontSize: 16,
+    maxHeight: 100,
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#2563eb',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
