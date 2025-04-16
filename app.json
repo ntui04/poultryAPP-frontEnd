@@ -16,8 +16,9 @@
       "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": ["expo-router",
-      "expo-image-picker", 
+    "plugins": [
+      "expo-router",
+      "expo-image-picker",
       [
         "expo-image-picker",
         {
@@ -28,6 +29,17 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "b7d96688-d94a-4e2e-a10d-db771b358335"
+      }
+    },
+    "android": {
+      "package": "com.costantine.KukuFarm"
     }
   }
 }
