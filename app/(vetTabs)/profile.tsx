@@ -62,7 +62,7 @@ const Profile = () => {
       id: 'personal',
       title: 'Personal Information',
       icon: <User size={20} color="#2563eb" />,
-      onPress: () => router.push('../vendprofile/Vendorhome'),
+      onPress: () => router.push('/userprofile/profileinfo'),
     },
     {
       id: 'farm',
