@@ -24,6 +24,7 @@ export default function ShopProfile() {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const mediaUrl = 'http://192.168.239.32:8000/storage/';
   const [selectedQuantities, setSelectedQuantities] = useState({});
+  const [itemLoading, setItemLoading] = useState({});
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -47,18 +48,15 @@ export default function ShopProfile() {
     try {
       const response = await productsApi.getAll();
       setShopData(response.data);
-      
-      // Initialize quantities for all products
-      const initialQuantities = {};
-      response.data.forEach(product => {
-        initialQuantities[product.id] = 1;
+
+      // Initialize loading states
+      const initialLoadingStates = {};
+      response.data.forEach((product) => {
+        initialLoadingStates[product.id] = false;
       });
-      setSelectedQuantities(initialQuantities);
+      setItemLoading(initialLoadingStates);
     } catch (error) {
-      console.error(
-        'Error fetching shop data:',
-        error.response?.data || error.message
-      );
+      console.error('Error fetching shop data:', error);
     } finally {
       setLoading(false);
     }
@@ -83,7 +81,9 @@ export default function ShopProfile() {
     try {
       Alert.alert(
         'Confirm Purchase',
-        `Would you like to buy ${quantity} ${quantity === 1 ? 'unit' : 'units'} of ${product.product_name} for $${totalPrice}?`,
+        `Would you like to buy ${quantity} ${
+          quantity === 1 ? 'unit' : 'units'
+        } of ${product.product_name} for $${totalPrice}?`,
         [
           {
             text: 'Cancel',
@@ -93,28 +93,37 @@ export default function ShopProfile() {
             text: 'Buy Now',
             onPress: async () => {
               try {
-                setPurchaseLoading(true);
+                // Set loading state only for this specific product
+                setItemLoading((prev) => ({ ...prev, [product.id]: true }));
+
                 await productsApi.purchase({
                   product_id: product.id,
                   quantity: quantity,
                   total_price: totalPrice,
                 });
+
                 Alert.alert(
                   'Success',
                   `Successfully purchased ${quantity} ${
                     quantity === 1 ? 'unit' : 'units'
                   } of ${product.product_name}!`
                 );
-                // Refresh the product list after successful purchase
-                fetchShopData();
+
+                // Instead of refreshing all data, just update the specific product's quantity
+                setSelectedQuantities((prev) => ({
+                  ...prev,
+                  [product.id]: 1, // Reset quantity to 1 after purchase
+                }));
               } catch (error) {
                 console.error('Purchase error:', error);
                 Alert.alert(
                   'Error',
-                  error.response?.data?.message || 'Failed to process purchase. Please try again.'
+                  error.response?.data?.message ||
+                    'Failed to process purchase. Please try again.'
                 );
               } finally {
-                setPurchaseLoading(false);
+                // Reset loading state for this product
+                setItemLoading((prev) => ({ ...prev, [product.id]: false }));
               }
             },
           },
@@ -126,7 +135,7 @@ export default function ShopProfile() {
   };
 
   const updateQuantity = (productId, amount) => {
-    setSelectedQuantities(prev => ({
+    setSelectedQuantities((prev) => ({
       ...prev,
       [productId]: Math.max(1, (prev[productId] || 1) + amount),
     }));
@@ -181,7 +190,10 @@ export default function ShopProfile() {
                 </Text>
                 <View style={styles.priceAndQuantity}>
                   <Text style={styles.productPrice}>
-                    ${(product.price * (selectedQuantities[product.id] || 1)).toFixed(2)}
+                    $
+                    {(
+                      product.price * (selectedQuantities[product.id] || 1)
+                    ).toFixed(2)}
                   </Text>
                   <View style={styles.quantityContainer}>
                     <TouchableOpacity
@@ -202,11 +214,14 @@ export default function ShopProfile() {
                   </View>
                 </View>
                 <TouchableOpacity
-                  style={[styles.buyButton, purchaseLoading && styles.buyButtonDisabled]}
+                  style={[
+                    styles.buyButton,
+                    itemLoading[product.id] && styles.buyButtonDisabled,
+                  ]}
                   onPress={() => handleBuyNow(product)}
-                  disabled={purchaseLoading}
+                  disabled={itemLoading[product.id]}
                 >
-                  {purchaseLoading ? (
+                  {itemLoading[product.id] ? (
                     <ActivityIndicator size="small" color="#ffffff" />
                   ) : (
                     <>
