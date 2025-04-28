@@ -96,7 +96,7 @@ const Profile = () => {
       id: 'orders',
       title: 'My Orders',
       icon: <ShoppingBag size={20} color="#2563eb" />,
-      onPress: () => router.push('/'),
+      onPress: () => router.push('/(tabs)/orders'),
     },
     {
       id: 'payments',

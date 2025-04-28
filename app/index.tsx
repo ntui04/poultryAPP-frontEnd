@@ -9,7 +9,7 @@ export default function TestimonyScreen() {
       {/* Header/Logo Section */}
       <View style={styles.header}>
         <Image 
-          source={require('../assets/images/icon.png')} // Add your logo image
+          source={require('../assets/images/logo.png')} // Add your logo image
           style={styles.logo}
           resizeMode="contain"
         />
@@ -26,14 +26,14 @@ export default function TestimonyScreen() {
         {/* Testimony 1 */}
         <View style={styles.testimonialCard}>
           <Image 
-                      source={require('../assets/images/icon.png')} // Add your logo image
+                      source={require('../assets/images/logo.png')} // Add your logo image
                       // Add testimony images
             style={styles.testimonialImage}
           />
           <Text style={styles.testimonialText}>
             "This app helped me connect with trusted vets and suppliers, increasing my farm productivity by 25%!"
           </Text>
-          <Text style={styles.testimonialAuthor}>- John Kamau, Poultry Farmer</Text>
+          <Text style={styles.testimonialAuthor}>- costantine clement - Poultry Farmer</Text>
         </View>
 
        
@@ -74,9 +74,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: 100,
-    height: 100,
-  },
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    borderWidth: 2,
+    borderColor: '#2563eb',
+    marginBottom: 20,},
   appName: {
     fontSize: 24,
     fontWeight: 'bold',
