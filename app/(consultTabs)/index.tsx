@@ -13,6 +13,7 @@ import {
 import { router } from 'expo-router';
 import { Search, Star, Clock, PlusCircle } from 'lucide-react-native';
 import { consultantsApi } from '../services/api';
+import { mediaUrl } from '../services/api';
 
 interface Consultant {
   id: string;
@@ -33,7 +34,7 @@ export default function ConsultantsHome() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaUrl = 'http://192.168.82.32:8000/storage/';
+  // const mediaUrl = 'http://192.168.82.32:8000/storage/';
 
 
   const fetchConsultants = async () => {

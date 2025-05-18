@@ -14,6 +14,7 @@ import {
 import { router } from 'expo-router';
 import { Search, BookOpen, CirclePlay as PlayCircle } from 'lucide-react-native';
 import { articlesApi } from '../services/api';
+import { mediaUrl } from '../services/api';
 
 interface Article {
   id: string;
@@ -33,7 +34,7 @@ export default function Education() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaUrl = 'http://192.168.90.32:8000/storage/';
+  // const mediaUrl = 'http://192.168.90.32:8000/storage/';
 
   const fetchArticles = async () => {
     try {

@@ -2,13 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store'
 const apiz = axios.create({
-  baseURL: 'http://172.16.194.9:8000/api',
+  baseURL: 'http://192.168.173.32:8000/api',
     //  baseURL: 'http://127.0.0.1:8000/api',
 
   timeout: 10000,
 })
 
-
+export const BASE_URL = 'http://192.168.173.32:8000';
+export const mediaUrl = `${BASE_URL}/storage/`;
 
 apiz.interceptors.request.use(
   async (config) => {

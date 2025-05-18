@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/Button';
 import apiz from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { shopData } from '@/utils/datatype';
+import { mediaUrl } from '../services/api'; // Adjust the import path as necessary
 
 export default function Products() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,7 +27,7 @@ export default function Products() {
   const [token, setToken] = useState(null);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaUrl = 'http://192.168.239.32:8000/storage/';
+  // const mediaUrl = 'http://192.168.239.32:8000/storage/';
 
   useEffect(() => {
     const fetchToken = async () => {
