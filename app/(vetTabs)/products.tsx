@@ -26,6 +26,8 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const [error, setError] = useState<string | null>(null);
+  const [imageLoadErrors, setImageLoadErrors] = useState<{[key: string]: boolean}>({});
+  const [imageLoading, setImageLoading] = useState<{[key: string]: boolean}>({});
 
   // const mediaUrl = 'http://192.168.239.32:8000/storage/';
 
@@ -175,10 +177,33 @@ export default function Products() {
         >
           {filteredProducts.map((product) => (
             <View key={product.id} style={styles.productCard}>
-              <Image 
-                source={{ uri: mediaUrl + product.image }}
-                style={styles.productImage}
-              />
+              <View style={styles.imageContainer}>
+                <Image 
+                  source={{ 
+                    uri: mediaUrl + product.image,
+                    cache: 'reload',
+                    headers: {
+                      'Cache-Control': 'no-cache'
+                    },
+                  }}
+                  style={styles.productImage}
+                  onLoadStart={() => setImageLoading({...imageLoading, [product.id]: true})}
+                  onLoadEnd={() => setImageLoading({...imageLoading, [product.id]: false})}
+                  onError={() => setImageLoadErrors({...imageLoadErrors, [product.id]: true})}
+                  resizeMode="contain"
+                />
+                {imageLoading[product.id] && (
+                  <View style={styles.imageLoadingOverlay}>
+                    <ActivityIndicator size="large" color="#0891b2" />
+                  </View>
+                )}
+                {imageLoadErrors[product.id] && (
+                  <View style={styles.imageErrorOverlay}>
+                    <Package size={32} color="#94a3b8" />
+                    <Text style={styles.imageErrorText}>Failed to load image</Text>
+                  </View>
+                )}
+              </View>
               <View style={styles.productInfo}>
                 <View style={styles.productHeader}>
                   <View style={styles.productTitles}>
@@ -325,10 +350,42 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 250, // Increased height for better quality
+    backgroundColor: '#f8fafc',
+    overflow: 'hidden',
+  },
   productImage: {
     width: '100%',
-    height: 200,
-    resizeMode: 'cover',
+    height: '100%',
+    backgroundColor: '#f8fafc',
+  },
+  imageLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageErrorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#f8fafc',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageErrorText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#64748b',
   },
   productInfo: {
     padding: 16,
