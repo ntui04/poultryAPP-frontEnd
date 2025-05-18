@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndic
 import { router } from 'expo-router';
 import { Search, Package, Truck, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle } from 'lucide-react-native';
 import apiz from '../services/api';
+import { OrderFilterButton } from '@/components/OrderFilterButton';
 
 interface Order {
   id: number;
@@ -98,6 +99,14 @@ export default function Orders() {
   });
   
 
+  const filterOptions = [
+    { label: 'All Orders', value: 'all' },
+    { label: 'Pending', value: 'pending' },
+    { label: 'Processing', value: 'processing' },
+    { label: 'Shipped', value: 'shipped' },
+    { label: 'Delivered', value: 'delivered' },
+  ] as const;
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -133,42 +142,21 @@ export default function Orders() {
         </View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterContainer}>
-        <Pressable
-          style={[styles.filterButton, selectedFilter === 'all' && styles.filterButtonActive]}
-          onPress={() => setSelectedFilter('all')}>
-          <Text style={[styles.filterText, selectedFilter === 'all' && styles.filterTextActive]}>
-            All Orders
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.filterButton, selectedFilter === 'pending' && styles.filterButtonActive]}
-          onPress={() => setSelectedFilter('pending')}>
-          <Text style={[styles.filterText, selectedFilter === 'pending' && styles.filterTextActive]}>
-            Pending
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.filterButton, selectedFilter === 'processing' && styles.filterButtonActive]}
-          onPress={() => setSelectedFilter('processing')}>
-          <Text style={[styles.filterText, selectedFilter === 'processing' && styles.filterTextActive]}>
-            Processing
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.filterButton, selectedFilter === 'shipped' && styles.filterButtonActive]}
-          onPress={() => setSelectedFilter('shipped')}>
-          <Text style={[styles.filterText, selectedFilter === 'shipped' && styles.filterTextActive]}>
-            Shipped
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.filterButton, selectedFilter === 'delivered' && styles.filterButtonActive]}
-          onPress={() => setSelectedFilter('delivered')}>
-          <Text style={[styles.filterText, selectedFilter === 'delivered' && styles.filterTextActive]}>
-            Delivered
-          </Text>
-        </Pressable>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.filterContainer}
+        contentContainerStyle={styles.filterContent}
+      >
+        {filterOptions.map((option) => (
+          <OrderFilterButton
+            key={option.value}
+            label={option.label}
+            value={option.value}
+            isActive={selectedFilter === option.value}
+            onPress={() => setSelectedFilter(option.value as typeof selectedFilter)}
+          />
+        ))}
       </ScrollView>
 
       <ScrollView style={styles.orderList}>
@@ -251,26 +239,14 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   filterContainer: {
-    padding: 16,
     backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
-  filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f1f5f9',
-    marginRight: 8,
-  },
-  filterButtonActive: {
-    backgroundColor: '#2563eb',
-  },
-  filterText: {
-    fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  filterTextActive: {
-    color: '#ffffff',
+  filterContent: {
+    padding: 16,
+    paddingBottom: 12,
+    gap: 8,
   },
   orderList: {
     padding: 16,

@@ -18,8 +18,9 @@ import * as ImagePicker from 'expo-image-picker';
 import apiz from '../services/api';
 import { useLocalSearchParams } from 'expo-router';
 import { Camera, DollarSign, Package, FileText } from 'lucide-react-native';
+// import { mediaUrl } from '../services/api';
 
-const API_BASE_URL = 'http://192.168.239.32:8000/api';
+// const API_BASE_URL = 'http://192.168.239.32:8000/api';
 
 export default function AddProduct() {
   const [formData, setFormData] = useState({
@@ -46,9 +47,12 @@ export default function AddProduct() {
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
+      allowsEditing: false, // Disable editing
       quality: 1,
+      aspect: undefined, // Remove aspect ratio constraint
+      allowsMultipleSelection: false,
+      base64: false,
+      exif: true
     });
 
     if (!result.canceled) {
@@ -266,7 +270,7 @@ const styles = StyleSheet.create({
   },
   imagePickerPlaceholder: {
     width: '100%',
-    height: 200,
+    height: 300, // Match the preview height
     backgroundColor: '#f1f5f9',
     borderRadius: 12,
     borderWidth: 2,
@@ -282,8 +286,9 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     width: '100%',
-    height: 200,
+    height: 300, // Increased height
     borderRadius: 12,
+    resizeMode: 'contain', // This will maintain aspect ratio
   },
   imagePickerButton: {
     width: '100%',
