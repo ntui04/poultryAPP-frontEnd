@@ -12,6 +12,7 @@ import {
 import { Package2, Calendar, DollarSign, Store } from 'lucide-react-native';
 import { router } from 'expo-router';
 import apiz from '../services/api';
+import { mediaUrl } from '../services/api';
 
 interface Shop {
   id: number;
@@ -43,7 +44,7 @@ export default function Orders() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaUrl = 'http://192.168.89.32:8000/storage/';
+  // const mediaUrl = 'http://192.168.89.32:8000/storage/';
 
   const fetchOrders = async () => {
     try {

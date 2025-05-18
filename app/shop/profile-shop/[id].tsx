@@ -22,6 +22,7 @@ import {
   Share2,
 } from 'lucide-react-native';
 import apiz from '../../services/api';
+import { mediaUrl } from '../../services/api';
 
 interface Shop {
   id: number;
@@ -43,7 +44,7 @@ export default function ShopDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaUrl = 'http://192.168.89.32:8000/storage/';
+  // const mediaUrl = 'http://192.168.89.32:8000/storage/';
 
   const fetchShopDetails = async () => {
     try {

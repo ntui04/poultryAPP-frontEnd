@@ -14,8 +14,9 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import * as ImagePicker from 'expo-image-picker';
 import apiz from '../services/api';
+import { mediaUrl } from '../services/api';
 
-const mediaUrl = 'http://192.168.69.32:8000/storage/'; // Adjust as needed
+// const mediaUrl = 'http://192.168.69.32:8000/storage/'; // Adjust as needed
 
 export default function EditProduct() {
   const { id } = useLocalSearchParams();

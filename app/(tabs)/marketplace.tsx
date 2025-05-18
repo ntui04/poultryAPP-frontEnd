@@ -14,6 +14,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Search, ShoppingCart, Minus, Plus } from 'lucide-react-native';
 import apiz, { productsApi } from '../services/api';
+import { mediaUrl } from '../services/api';
 
 export default function ShopProfile() {
   const [refreshing, setRefreshing] = useState(false);
@@ -22,7 +23,7 @@ export default function ShopProfile() {
   const [token, setToken] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
-  const mediaUrl = 'http://192.168.239.32:8000/storage/';
+  // const mediaUrl = 'http://192.168.239.32:8000/storage/';
   const [selectedQuantities, setSelectedQuantities] = useState({});
   const [itemLoading, setItemLoading] = useState({});
 
