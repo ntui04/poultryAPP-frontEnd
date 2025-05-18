@@ -72,7 +72,11 @@ export default function EditProduct() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0.8, // Increased quality (0-1)
+      base64: false,
+      exif: true,
+      allowsMultipleSelection: false,
+      presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN
     });
 
     if (!result.canceled) {
@@ -98,14 +102,14 @@ export default function EditProduct() {
       formDataToSend.append('stock_quantity', formData.stock_quantity.toString());
       
       if (image) {
-        // Get the file extension from the image URI
-        const imageUriParts = image.split('.');
-        const fileExtension = imageUriParts[imageUriParts.length - 1];
+        const imageInfo = await ImagePicker.getImageInfoAsync(image);
         
         formDataToSend.append('image', {
           uri: image,
-          name: `product_image.${fileExtension}`,
-          type: `image/${fileExtension}`
+          name: `product_image_${Date.now()}.${imageInfo.uri.split('.').pop()}`,
+          type: `image/${imageInfo.uri.split('.').pop()}`,
+          width: imageInfo.width,
+          height: imageInfo.height,
         });
       }
 
@@ -245,13 +249,15 @@ const styles = StyleSheet.create({
   },
   imageSection: {
     marginVertical: 16,
+    alignItems: 'center',
   },
   imagePreview: {
     width: '100%',
-    height: 200,
+    height: 300, // Increased height
     marginVertical: 8,
     borderRadius: 8,
-    resizeMode: 'cover',
+    resizeMode: 'contain', // Changed to contain to show full image
+    backgroundColor: '#f3f4f6', // Light background for transparency
   },
   imageButton: {
     marginTop: 8,
@@ -266,5 +272,20 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 8,
     color: '#6b7280',
+  },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    aspectRatio: 4 / 3,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginVertical: 8,
+  },
+  imageLoader: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -12 }, { translateY: -12 }],
   },
 });
