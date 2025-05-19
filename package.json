@@ -12,6 +12,7 @@
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo-google-fonts/poppins": "^0.2.3",
     "@expo/vector-icons": "^14.0.2",
+    "@mistralai/mistralai": "^1.6.0",
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
@@ -33,6 +34,7 @@
     "expo-splash-screen": "~0.29.24",
     "expo-status-bar": "^2.0.1",
     "expo-web-browser": "^14.0.2",
+    "franc": "^6.2.0",
     "lucide-react-native": "^0.475.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -46,6 +48,7 @@
     "react-native-svg": "15.8.0",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "^0.19.13",
+    "zod": "^3.25.6",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

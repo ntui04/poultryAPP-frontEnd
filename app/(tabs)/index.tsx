@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,8 @@ import {
   Send,
   X,
 } from 'lucide-react-native';
+import mistralAIService from '../services/mistralAI';
+import { franc } from 'franc';
 
 interface Message {
   id: string;
@@ -42,11 +44,21 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hello! I'm your AgroAssistant. How can I help you today?",
+      text: "Hello! I'm your AgroAssistant. How can I help you today?\n\nHabari! Mimi ni Msaidizi wa Kilimo. Nawezaje kukusaidia leo?",
       sender: 'bot',
       timestamp: new Date(),
     },
   ]);
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<ScrollView>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollToEnd({ animated: true });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const farmStats = {
     totalBirds: 2500,
@@ -83,125 +95,144 @@ export default function Home() {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: message,
+      text: message.trim(),
       sender: 'user',
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setMessage('');
+    setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      // Detect language (simplified)
+      const detectedLang = franc(message, { whitelist: ['eng', 'swh'] });
+      const language = detectedLang === 'swh' ? 'sw' : 'en';
+
+      const response = await mistralAIService.generateResponse(message, language);
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "I'll help you with that. What specific information do you need about your farm?",
+        text: response,
         sender: 'bot',
         timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, botMessage]);
-    }, 1000);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: error instanceof Error 
+          ? error.message 
+          : "I'm sorry, I couldn't process your request. Please try again.",
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
     <>
       <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>
-            {user?.lastname ? `Welcome back, ${user.lastname}` : 'Welcome back!'} {user?.firstname}
-          </Text>
+        style={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* Header Section */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>
+              {user?.lastname
+                ? `Welcome back, ${user.lastname}`
+                : 'Welcome back!'}{' '}
+              {user?.firstname}
+            </Text>
 
-          <View style={styles.location}>
-            <MapPin size={16} color="#64748b" />
-            <Text style={styles.locationText}>Mbeya, Tanzania</Text>
-          </View>
-        </View>
-        <Pressable
-          style={styles.notificationButton}
-          // onPress={() => router.push('/notifications')}
-        >
-          <Bell size={24} color="#1f2937" />
-          <View style={styles.notificationBadge} />
-        </Pressable>
-
-        {/* <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={() => router.push('/(tabs)/profile/profile')}
-            >
-              profile
-            </TouchableOpacity> */}
-      </View>
-
-      {/* Weather Card */}
-      <View style={styles.weatherCard}>
-        <View style={styles.weatherInfo}>
-          <ThermometerSun size={24} color="#2563eb" />
-          <View style={styles.weatherDetails}>
-            <Text style={styles.weatherTemp}>{weatherInfo.temperature}°C</Text>
-            <Text style={styles.weatherDesc}>{weatherInfo.condition}</Text>
-          </View>
-        </View>
-        <Text style={styles.weatherHumidity}>
-          Humidity: {weatherInfo.humidity}%
-        </Text>
-      </View>
-
-      {/* Farm Statistics */}
-      <View style={styles.statsContainer}>
-        <Text style={styles.sectionTitle}>Farm Overview</Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Users size={20} color="#2563eb" />
-            <Text style={styles.statValue}>{farmStats.totalBirds}</Text>
-            <Text style={styles.statLabel}>Total Birds</Text>
-          </View>
-          <View style={styles.statCard}>
-            <TrendingUp size={20} color="#2563eb" />
-            <Text style={styles.statValue}>{farmStats.mortality}%</Text>
-            <Text style={styles.statLabel}>Mortality Rate</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Calendar size={20} color="#2563eb" />
-            <Text style={styles.statValue}>{farmStats.avgWeight}kg</Text>
-            <Text style={styles.statLabel}>Avg Weight</Text>
-          </View>
-          <View style={styles.statCard}>
-            <ThermometerSun size={20} color="#2563eb" />
-            <Text style={styles.statValue}>{farmStats.feedConsumption}kg</Text>
-            <Text style={styles.statLabel}>Feed Used</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Upcoming Tasks */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Today's Tasks</Text>
-        {upcomingTasks.map((task) => (
-          <Pressable
-            key={task.id}
-            style={styles.taskCard}
-            // onPress={() => router.push(/task/${task.id})}
-          >
-            <View style={styles.taskHeader}>
-              <Text style={styles.taskTitle}>{task.title}</Text>
-              <Text style={styles.taskDate}>{task.date}</Text>
+            <View style={styles.location}>
+              <MapPin size={16} color="#64748b" />
+              <Text style={styles.locationText}>Mbeya, Tanzania</Text>
             </View>
-            <Text style={styles.taskDescription}>{task.description}</Text>
+          </View>
+          <Pressable
+            style={styles.notificationButton}
+            // onPress={() => router.push('/notifications')}
+          >
+            <Bell size={24} color="#1f2937" />
+            <View style={styles.notificationBadge} />
           </Pressable>
-        ))}
-      </View>
-    </ScrollView>
+        </View>
+
+        {/* Weather Card */}
+        <View style={styles.weatherCard}>
+          <View style={styles.weatherInfo}>
+            <ThermometerSun size={24} color="#2563eb" />
+            <View style={styles.weatherDetails}>
+              <Text style={styles.weatherTemp}>
+                {weatherInfo.temperature}°C
+              </Text>
+              <Text style={styles.weatherDesc}>{weatherInfo.condition}</Text>
+            </View>
+          </View>
+          <Text style={styles.weatherHumidity}>
+            Humidity: {weatherInfo.humidity}%
+          </Text>
+        </View>
+
+        {/* Farm Statistics */}
+        <View style={styles.statsContainer}>
+          <Text style={styles.sectionTitle}>Farm Overview</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Users size={20} color="#2563eb" />
+              <Text style={styles.statValue}>{farmStats.totalBirds}</Text>
+              <Text style={styles.statLabel}>Total Birds</Text>
+            </View>
+            <View style={styles.statCard}>
+              <TrendingUp size={20} color="#2563eb" />
+              <Text style={styles.statValue}>{farmStats.mortality}%</Text>
+              <Text style={styles.statLabel}>Mortality Rate</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Calendar size={20} color="#2563eb" />
+              <Text style={styles.statValue}>{farmStats.avgWeight}kg</Text>
+              <Text style={styles.statLabel}>Avg Weight</Text>
+            </View>
+            <View style={styles.statCard}>
+              <ThermometerSun size={20} color="#2563eb" />
+              <Text style={styles.statValue}>{farmStats.feedConsumption}kg</Text>
+              <Text style={styles.statLabel}>Feed Used</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Upcoming Tasks */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Today's Tasks</Text>
+          {upcomingTasks.map((task) => (
+            <Pressable
+              key={task.id}
+              style={styles.taskCard}
+              // onPress={() => router.push(/task/${task.id})}
+            >
+              <View style={styles.taskHeader}>
+                <Text style={styles.taskTitle}>{task.title}</Text>
+                <Text style={styles.taskDate}>{task.date}</Text>
+              </View>
+              <Text style={styles.taskDescription}>{task.description}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
 
       {/* FAB */}
       <TouchableOpacity
@@ -224,7 +255,16 @@ export default function Home() {
         >
           <View style={styles.chatContainer}>
             <View style={styles.chatHeader}>
-              <Text style={styles.chatTitle}>AgroAssistant</Text>
+              <View style={styles.chatHeaderLeft}>
+                <Image 
+                  source={require('../../assets/images/bot-avatar.png')} 
+                  style={styles.botAvatar} 
+                />
+                <View>
+                  <Text style={styles.chatTitle}>AgroAssistant</Text>
+                  <Text style={styles.chatSubtitle}>Poultry Expert</Text>
+                </View>
+              </View>
               <TouchableOpacity
                 onPress={() => setIsChatOpen(false)}
                 style={styles.closeButton}
@@ -233,7 +273,11 @@ export default function Home() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.messagesContainer}>
+            <ScrollView 
+              ref={messagesEndRef} 
+              style={styles.messagesContainer}
+              contentContainerStyle={styles.messagesContent}
+            >
               {messages.map((msg) => (
                 <View
                   key={msg.id}
@@ -242,38 +286,65 @@ export default function Home() {
                     msg.sender === 'user' ? styles.userMessage : styles.botMessage,
                   ]}
                 >
-                  <Text
-                    style={[
+                  {msg.sender === 'bot' && (
+                    <Image 
+                      source={require('../../assets/images/bot-avatar.png')} 
+                      style={styles.messageBotAvatar} 
+                    />
+                  )}
+                  <View style={[
+                    styles.messageContent,
+                    msg.sender === 'user' ? styles.userMessageContent : styles.botMessageContent,
+                  ]}>
+                    <Text style={[
                       styles.messageText,
-                      msg.sender === 'user'
-                        ? styles.userMessageText
-                        : styles.botMessageText,
-                    ]}
-                  >
-                    {msg.text}
-                  </Text>
-                  <Text style={styles.messageTime}>
-                    {msg.timestamp.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Text>
+                      msg.sender === 'user' ? styles.userMessageText : styles.botMessageText,
+                    ]}>
+                      {msg.text}
+                    </Text>
+                    <Text style={[
+                      styles.messageTime,
+                      msg.sender === 'user' ? styles.userMessageTime : styles.botMessageTime,
+                    ]}>
+                      {msg.timestamp.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Text>
+                  </View>
                 </View>
               ))}
+              {isTyping && (
+                <View style={[styles.messageWrapper, styles.botMessage]}>
+                  <Image 
+                    source={require('../../assets/images/bot-avatar.png')} 
+                    style={styles.messageBotAvatar} 
+                  />
+                  <View style={styles.typingIndicator}>
+                    <View style={styles.typingDots}>
+                      <View style={[styles.dot, styles.dot1]} />
+                      <View style={[styles.dot, styles.dot2]} />
+                      <View style={[styles.dot, styles.dot3]} />
+                    </View>
+                  </View>
+                </View>
+              )}
             </ScrollView>
 
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
-                placeholder="Type your message..."
+                placeholder="Ask about poultry farming..."
+                placeholderTextColor="#94a3b8"
                 value={message}
                 onChangeText={setMessage}
                 multiline
                 maxLength={500}
               />
               <TouchableOpacity
-                style={styles.sendButton}
+                style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
                 onPress={handleSendMessage}
+                disabled={!message.trim()}
               >
                 <Send size={20} color="#fff" />
               </TouchableOpacity>
@@ -466,10 +537,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
+  chatHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  botAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
   chatTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1f2937',
+  },
+  chatSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
   },
   closeButton: {
     padding: 8,
@@ -478,11 +563,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  messagesContent: {
+    paddingBottom: 16,
+  },
   messageWrapper: {
     maxWidth: '80%',
     marginBottom: 12,
-    padding: 12,
-    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
   },
   userMessage: {
     alignSelf: 'flex-end',
@@ -490,6 +578,22 @@ const styles = StyleSheet.create({
   },
   botMessage: {
     alignSelf: 'flex-start',
+    backgroundColor: '#f1f5f9',
+  },
+  messageBotAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 8,
+  },
+  messageContent: {
+    padding: 12,
+    borderRadius: 16,
+  },
+  userMessageContent: {
+    backgroundColor: '#2563eb',
+  },
+  botMessageContent: {
     backgroundColor: '#f1f5f9',
   },
   messageText: {
@@ -504,8 +608,13 @@ const styles = StyleSheet.create({
   },
   messageTime: {
     fontSize: 12,
-    color: '#64748b',
     alignSelf: 'flex-end',
+  },
+  userMessageTime: {
+    color: '#94a3b8',
+  },
+  botMessageTime: {
+    color: '#64748b',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -531,5 +640,36 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#94a3b8',
+  },
+  typingIndicator: {
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: '#f1f5f9',
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    backgroundColor: '#64748b',
+    borderRadius: 4,
+    marginHorizontal: 2,
+  },
+  dot1: {
+    animationDelay: '0s',
+  },
+  dot2: {
+    animationDelay: '0.2s',
+  },
+  dot3: {
+    animationDelay: '0.4s',
   },
 });
