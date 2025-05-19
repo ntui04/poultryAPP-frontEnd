@@ -23,6 +23,7 @@ import {
   Package2,
 } from 'lucide-react-native';
 import { ordersApi } from '../../services/api';
+import { mediaUrl} from '../../services/api';
 
 interface Order {
   id: number;
@@ -49,7 +50,7 @@ export default function OrderDetails() {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaUrl = 'http://192.168.90.32:8000/storage/';
+  // const mediaUrl = 'http://192.168.90.32:8000/storage/';
 
   useEffect(() => {
     fetchOrder();
