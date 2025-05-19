@@ -58,7 +58,7 @@ export default function Consultation() {
               <Text style={styles.specialization}>{vet.specialization}</Text>
               <Text style={styles.experience}>{vet.experience} experience</Text>
               <View style={styles.consultationMeta}>
-                <Text style={styles.price}>KES {vet.price}</Text>
+                <Text style={styles.price}>TSH {vet.price}</Text>
                 {vet.available && (
                   <View style={styles.availableTag}>
                     <Text style={styles.availableText}>Available Today</Text>

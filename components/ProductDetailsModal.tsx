@@ -18,7 +18,24 @@ const formatPrice = (price: number | string | undefined): string => {
   return numPrice.toFixed(2);
 };
 
-const ProductDetailsModal = ({ 
+type ProductDetailsModalProps = {
+  visible: boolean;
+  product: {
+    image?: string;
+    product_name?: string;
+    price?: number | string;
+    description?: string;
+    stock_quantity?: number | string;
+    [key: string]: any;
+  } | null;
+  onClose: () => void;
+  onBuy: () => void;
+  quantity: number;
+  onUpdateQuantity: (delta: number) => void;
+  loading: boolean;
+};
+
+const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ 
   visible, 
   product, 
   onClose, 
