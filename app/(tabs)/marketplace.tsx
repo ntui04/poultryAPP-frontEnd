@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Search, ShoppingCart, Minus, Plus } from 'lucide-react-native';
 import apiz, { productsApi } from '../services/api';
 import { mediaUrl } from '../services/api';
+import ProductDetailsModal from '../../components/ProductDetailsModal';
 
 export default function ShopProfile() {
   const [refreshing, setRefreshing] = useState(false);
@@ -23,11 +24,12 @@ export default function ShopProfile() {
   const [token, setToken] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [purchaseLoading, setPurchaseLoading] = useState(false);
-  // const mediaUrl = 'http://192.168.239.32:8000/storage/';
   const [selectedQuantities, setSelectedQuantities] = useState({});
   const [itemLoading, setItemLoading] = useState({});
   const [imageLoadErrors, setImageLoadErrors] = useState<{[key: string]: boolean}>({});
   const [imageLoading, setImageLoading] = useState<{[key: string]: boolean}>({});
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -144,6 +146,11 @@ export default function ShopProfile() {
     }));
   };
 
+  const handleProductPress = (product) => {
+    setSelectedProduct(product);
+    setIsModalVisible(true);
+  };
+
   const filteredProducts = shopData.filter((product) =>
     product.product_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -181,7 +188,11 @@ export default function ShopProfile() {
           </View>
         ) : (
           filteredProducts.map((product) => (
-            <View key={product.id} style={styles.productCard}>
+            <TouchableOpacity
+              key={product.id}
+              style={styles.productCard}
+              onPress={() => handleProductPress(product)}
+            >
               <View style={styles.imageContainer}>
                 <Image
                   source={{
@@ -210,16 +221,15 @@ export default function ShopProfile() {
                 )}
               </View>
               <View style={styles.productInfo}>
-                <Text style={styles.productName}>{product.product_name}</Text>
-                <Text style={styles.productDescription}>
+                <Text style={styles.productName} numberOfLines={1} ellipsizeMode="tail">
+                  {product.product_name}
+                </Text>
+                <Text style={styles.productDescription} numberOfLines={2} ellipsizeMode="tail">
                   {product.description}
                 </Text>
                 <View style={styles.priceAndQuantity}>
                   <Text style={styles.productPrice}>
-                    $
-                    {(
-                      product.price * (selectedQuantities[product.id] || 1)
-                    ).toFixed(2)}
+                    TSH {(product.price * (selectedQuantities[product.id] || 1)).toFixed(2)}
                   </Text>
                   <View style={styles.quantityContainer}>
                     <TouchableOpacity
@@ -261,10 +271,22 @@ export default function ShopProfile() {
                   )}
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           ))
         )}
       </ScrollView>
+
+      <ProductDetailsModal
+        visible={isModalVisible}
+        product={selectedProduct}
+        onClose={() => setIsModalVisible(false)}
+        onBuy={() => handleBuyNow(selectedProduct)}
+        quantity={selectedQuantities[selectedProduct?.id] || 1}
+        onUpdateQuantity={(amount) => 
+          selectedProduct && updateQuantity(selectedProduct.id, amount)
+        }
+        loading={itemLoading[selectedProduct?.id]}
+      />
     </View>
   );
 }
@@ -272,6 +294,7 @@ export default function ShopProfile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8fafc',
     backgroundColor: '#f8fafc',
   },
   searchContainer: {
@@ -315,11 +338,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     overflow: 'hidden',
+    transform: [{ scale: 1 }], // Add this for press animation
+  },
+  productCardPressed: {
+    transform: [{ scale: 0.98 }],
   },
   imageContainer: {
     position: 'relative',
     width: '100%',
-    height: 300,
+    height: 200, // Reduced height
     backgroundColor: '#f8fafc',
     overflow: 'hidden',
   },
@@ -354,13 +381,13 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   productInfo: {
-    padding: 16,
+    padding: 12, // Reduced padding
   },
   productName: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 16, // Reduced font size
+    fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   productPrice: {
     fontSize: 18,
@@ -368,10 +395,10 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
   productDescription: {
-    fontSize: 16,
+    fontSize: 14, // Reduced font size
     color: '#64748b',
-    lineHeight: 24,
-    marginBottom: 16,
+    lineHeight: 20,
+    marginBottom: 12,
   },
   priceAndQuantity: {
     flexDirection: 'row',
@@ -387,10 +414,6 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   quantityButton: {
-    padding: 8,
-    backgroundColor: '#ffffff',
-    borderRadius: 6,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
