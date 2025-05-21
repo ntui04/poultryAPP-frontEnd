@@ -25,6 +25,12 @@
           "photosPermission": "This app uses the photo library to upload images.",
           "cameraPermission": "This app uses the camera to take photos."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location for delivery purposes."
+        }
       ]
     ],
     "experiments": {

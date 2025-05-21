@@ -2,13 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store'
 const apiz = axios.create({
-  baseURL: 'http://192.168.154.32:8000/api',
+  baseURL: 'http://192.168.26.32:8000/api',
     //  baseURL: 'http://127.0.0.1:8000/api',
 
   timeout: 10000,
 })
 
-export const BASE_URL = 'http://192.168.154.32:8000';
+export const BASE_URL = 'http://192.168.26.32:8000';
 export const mediaUrl = `${BASE_URL}/storage/`;
 
 apiz.interceptors.request.use(
@@ -45,13 +45,21 @@ export const articlesApi = {
 };
 
 
+
 export const productsApi = {
   getAll: () => apiz.get('/products/farm'),
-  getMyPurchases: () => apiz.get('/purchases'), // Add this endpoint
+  getMyPurchases: () => apiz.get('/purchases'),
   purchase: (data: {
     product_id: number;
     quantity: number;
     total_price: number;
+    location: {
+      city: string | null;
+      region: string | null;
+      country: string | null;
+      latitude: number | null;
+      longitude: number | null;
+    };
   }) => apiz.post('/purchases', data),
 };
 

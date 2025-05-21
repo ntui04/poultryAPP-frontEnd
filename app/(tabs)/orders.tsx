@@ -8,8 +8,10 @@ import {
   ActivityIndicator,
   Image,
   Pressable,
+  Alert,
+  TouchableOpacity,
 } from 'react-native';
-import { Package2, Calendar, DollarSign, Store } from 'lucide-react-native';
+import { Package2, Calendar, DollarSign, Store, Check, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import apiz from '../services/api';
 import { mediaUrl } from '../services/api';
@@ -44,7 +46,17 @@ export default function Orders() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // const mediaUrl = 'http://192.168.89.32:8000/storage/';
+  const updateOrderStatus = async (orderId: number, newStatus: 'completed' | 'cancelled') => {
+    try {
+      await apiz.patch(`/purchases/${orderId}/status`, { status: newStatus });
+      // Update local state
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      ));
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update order status');
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -185,6 +197,51 @@ export default function Orders() {
                   </View>
                 </View>
               </View>
+
+              {order.status === 'pending' && (
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.receiveButton]}
+                    onPress={() => {
+                      Alert.alert(
+                        'Confirm Reception',
+                        'Have you received this order?',
+                        [
+                          { text: 'No', style: 'cancel' },
+                          {
+                            text: 'Yes, Received',
+                            onPress: () => updateOrderStatus(order.id, 'completed')
+                          }
+                        ]
+                      );
+                    }}
+                  >
+                    <Check size={20} color="#fff" style={styles.actionIcon} />
+                    <Text style={styles.actionButtonText}>Mark as Received</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.cancelButton]}
+                    onPress={() => {
+                      Alert.alert(
+                        'Cancel Order',
+                        'Are you sure you want to cancel this order?',
+                        [
+                          { text: 'No', style: 'cancel' },
+                          {
+                            text: 'Yes, Cancel',
+                            style: 'destructive',
+                            onPress: () => updateOrderStatus(order.id, 'cancelled')
+                          }
+                        ]
+                      );
+                    }}
+                  >
+                    <X size={20} color="#dc2626" style={styles.actionIcon} />
+                    <Text style={styles.cancelButtonText}>Cancel Order</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           ))
         )}
@@ -353,5 +410,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2563eb',
     marginLeft: 4,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  receiveButton: {
+    backgroundColor: '#2563eb',
+  },
+  cancelButton: {
+    backgroundColor: '#fee2e2',
+    borderWidth: 1,
+    borderColor: '#dc2626',
+  },
+  actionIcon: {
+    marginRight: 8,
+  },
+  actionButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  cancelButtonText: {
+    color: '#dc2626',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
