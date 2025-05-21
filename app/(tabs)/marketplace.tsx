@@ -16,6 +16,7 @@ import { Search, ShoppingCart, Minus, Plus } from 'lucide-react-native';
 import apiz, { productsApi } from '../services/api';
 import { mediaUrl } from '../services/api';
 import ProductDetailsModal from '../../components/ProductDetailsModal';
+import * as Location from 'expo-location';
 
 export default function ShopProfile() {
   const [refreshing, setRefreshing] = useState(false);
@@ -26,10 +27,12 @@ export default function ShopProfile() {
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [selectedQuantities, setSelectedQuantities] = useState({});
   const [itemLoading, setItemLoading] = useState({});
-  const [imageLoadErrors, setImageLoadErrors] = useState<{[key: string]: boolean}>({});
-  const [imageLoading, setImageLoading] = useState<{[key: string]: boolean}>({});
+  const [imageLoadErrors, setImageLoadErrors] = useState({});
+  const [imageLoading, setImageLoading] = useState({});
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const GOOGLE_API_KEY = 'AIzaSyCyzrcI5QUoMWtYxtvj7AkPfLUzLL5-WzU';
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -54,7 +57,6 @@ export default function ShopProfile() {
       const response = await productsApi.getAll();
       setShopData(response.data);
 
-      // Initialize loading states
       const initialLoadingStates = {};
       response.data.forEach((product) => {
         initialLoadingStates[product.id] = false;
@@ -79,11 +81,101 @@ export default function ShopProfile() {
     setRefreshing(false);
   };
 
+  const fetchLocation = async () => {
+    try {
+      // Check for cached location
+      const cachedLocation = await AsyncStorage.getItem('userLocation');
+      if (cachedLocation) {
+        return JSON.parse(cachedLocation);
+      }
+
+      // Request permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Denied',
+          'Please allow location access to complete your purchase.',
+          [{ text: 'OK' }]
+        );
+        return null;
+      }
+
+      // Get current position with timeout and balanced accuracy
+      const location = await Promise.race([
+        Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced, // Faster with reasonable accuracy
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Location request timed out')), 10000) // 10s timeout
+        ),
+      ]);
+
+      if (!location) {
+        throw new Error('Failed to get location');
+      }
+
+      // Use Google Maps Geocoding API for reverse geocoding
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.coords.latitude},${location.coords.longitude}&key=${GOOGLE_API_KEY}`
+      );
+      const data = await response.json();
+
+      if (data.status !== 'OK') {
+        throw new Error('Google Geocoding API error: ' + data.status);
+      }
+
+      const address = data.results[0];
+      let city = null;
+      let region = null;
+      let country = null;
+
+      // Extract address components
+      for (const component of address.address_components) {
+        if (component.types.includes('locality')) {
+          city = component.long_name;
+        }
+        if (component.types.includes('administrative_area_level_1')) {
+          region = component.long_name;
+        }
+        if (component.types.includes('country')) {
+          country = component.long_name;
+        }
+      }
+
+      const locationData = {
+        city,
+        region,
+        country,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+
+      // Cache the location data
+      await AsyncStorage.setItem('userLocation', JSON.stringify(locationData));
+
+      return locationData;
+    } catch (error) {
+      console.error('Error fetching location:', error);
+      Alert.alert(
+        'Location Error',
+        'Unable to fetch your location. Please check your device settings or network.',
+        [{ text: 'OK' }]
+      );
+      return null;
+    }
+  };
+
   const handleBuyNow = async (product) => {
     const quantity = selectedQuantities[product.id] || 1;
     const totalPrice = parseFloat((product.price * quantity).toFixed(2));
 
     try {
+      const location = await fetchLocation();
+      if (!location) {
+        Alert.alert('Error', 'Failed to fetch location. Please try again.');
+        return;
+      }
+
       Alert.alert(
         'Confirm Purchase',
         `Would you like to buy ${quantity} ${
@@ -98,13 +190,19 @@ export default function ShopProfile() {
             text: 'Buy Now',
             onPress: async () => {
               try {
-                // Set loading state only for this specific product
                 setItemLoading((prev) => ({ ...prev, [product.id]: true }));
 
                 await productsApi.purchase({
                   product_id: product.id,
                   quantity: quantity,
                   total_price: totalPrice,
+                  location: {
+                    city: location.city,
+                    region: location.region,
+                    country: location.country,
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                  },
                 });
 
                 Alert.alert(
@@ -114,10 +212,9 @@ export default function ShopProfile() {
                   } of ${product.product_name}!`
                 );
 
-                // Instead of refreshing all data, just update the specific product's quantity
                 setSelectedQuantities((prev) => ({
                   ...prev,
-                  [product.id]: 1, // Reset quantity to 1 after purchase
+                  [product.id]: 1,
                 }));
               } catch (error) {
                 console.error('Purchase error:', error);
@@ -127,7 +224,6 @@ export default function ShopProfile() {
                     'Failed to process purchase. Please try again.'
                 );
               } finally {
-                // Reset loading state for this product
                 setItemLoading((prev) => ({ ...prev, [product.id]: false }));
               }
             },
@@ -199,13 +295,19 @@ export default function ShopProfile() {
                     uri: mediaUrl + product.image,
                     cache: 'reload',
                     headers: {
-                      'Cache-Control': 'no-cache'
+                      'Cache-Control': 'no-cache',
                     },
                   }}
                   style={styles.productImage}
-                  onLoadStart={() => setImageLoading({...imageLoading, [product.id]: true})}
-                  onLoadEnd={() => setImageLoading({...imageLoading, [product.id]: false})}
-                  onError={() => setImageLoadErrors({...imageLoadErrors, [product.id]: true})}
+                  onLoadStart={() =>
+                    setImageLoading({ ...imageLoading, [product.id]: true })
+                  }
+                  onLoadEnd={() =>
+                    setImageLoading({ ...imageLoading, [product.id]: false })
+                  }
+                  onError={() =>
+                    setImageLoadErrors({ ...imageLoadErrors, [product.id]: true })
+                  }
                   resizeMode="contain"
                 />
                 {imageLoading[product.id] && (
@@ -221,15 +323,24 @@ export default function ShopProfile() {
                 )}
               </View>
               <View style={styles.productInfo}>
-                <Text style={styles.productName} numberOfLines={1} ellipsizeMode="tail">
+                <Text
+                  style={styles.productName}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {product.product_name}
                 </Text>
-                <Text style={styles.productDescription} numberOfLines={2} ellipsizeMode="tail">
+                <Text
+                  style={styles.productDescription}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
                   {product.description}
                 </Text>
                 <View style={styles.priceAndQuantity}>
                   <Text style={styles.productPrice}>
-                    TSH {(product.price * (selectedQuantities[product.id] || 1)).toFixed(2)}
+                    TSH{' '}
+                    {(product.price * (selectedQuantities[product.id] || 1)).toFixed(2)}
                   </Text>
                   <View style={styles.quantityContainer}>
                     <TouchableOpacity
@@ -282,15 +393,14 @@ export default function ShopProfile() {
         onClose={() => setIsModalVisible(false)}
         onBuy={() => handleBuyNow(selectedProduct)}
         quantity={selectedQuantities[selectedProduct?.id] || 1}
-        onUpdateQuantity={(amount) => 
+        onUpdateQuantity={(amount) =>
           selectedProduct && updateQuantity(selectedProduct.id, amount)
         }
-        loading={itemLoading[selectedProduct?.id]}
+        loading={itemLoading[selectedProduct?.id] || purchaseLoading}
       />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
