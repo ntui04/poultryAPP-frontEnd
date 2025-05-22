@@ -8,8 +8,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  SafeAreaView,
 } from 'react-native';
-import { X, ShoppingCart } from 'lucide-react-native';
+import { X, ShoppingCart, Heart, Share2 } from 'lucide-react-native';
 import { mediaUrl } from '@/app/services/api';
 
 const formatPrice = (price: number | string | undefined): string => {
@@ -35,14 +36,14 @@ type ProductDetailsModalProps = {
   loading: boolean;
 };
 
-const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ 
-  visible, 
-  product, 
-  onClose, 
-  onBuy, 
-  quantity, 
+const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
+  visible,
+  product,
+  onClose,
+  onBuy,
+  quantity,
   onUpdateQuantity,
-  loading 
+  loading
 }) => {
   return (
     <Modal
@@ -51,66 +52,102 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
+      <SafeAreaView style={styles.modalContainer}>
+        <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <X size={24} color="#64748b" />
+            <X size={24} color="#333" />
           </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.headerButton}>
+              <Share2 size={24} color="#333" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerButton}>
+              <Heart size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-          <ScrollView style={styles.modalScroll}>
+        <ScrollView style={styles.modalScroll} bounces={false}>
+          <View style={styles.imageContainer}>
             <Image
-              source={{ uri: mediaUrl + product?.image }}
+              source={{ 
+                uri: mediaUrl + product?.image,
+                cache: 'reload',
+                headers: { 'Cache-Control': 'no-cache' }
+              }}
               style={styles.modalImage}
               resizeMode="contain"
+              fadeDuration={0}
             />
-            
-            <View style={styles.modalInfo}>
-              <Text style={styles.modalTitle}>{product?.product_name}</Text>
+          </View>
+          
+          <View style={styles.modalInfo}>
+            <View style={styles.priceSection}>
               <Text style={styles.modalPrice}>
                 TSH {formatPrice(product?.price)}
               </Text>
-              <Text style={styles.modalDescription}>{product?.description}</Text>
-              
-              <View style={styles.stockInfo}>
-                <Text style={styles.stockLabel}>Available Stock:</Text>
-                <Text style={styles.stockValue}>{product?.stock_quantity}</Text>
+              {product?.stock_quantity && Number(product.stock_quantity) < 10 && (
+                <Text style={styles.lowStock}>
+                  Only {product.stock_quantity} left!
+                </Text>
+              )}
+            </View>
+
+            <Text style={styles.modalTitle}>{product?.product_name}</Text>
+            
+            <View style={styles.statsSection}>
+              <View style={styles.stat}>
+                <Text style={styles.statValue}>{product?.stock_quantity}</Text>
+                <Text style={styles.statLabel}>In Stock</Text>
               </View>
-
-              {/* Quantity selector and Buy button */}
-              <View style={styles.buySection}>
-                <View style={styles.quantitySelector}>
-                  <TouchableOpacity 
-                    style={styles.quantityButton}
-                    onPress={() => onUpdateQuantity(-1)}
-                  >
-                    <Text style={styles.quantityButtonText}>-</Text>
-                  </TouchableOpacity>
-                  
-                  <Text style={styles.quantityText}>{quantity}</Text>
-                  
-                  <TouchableOpacity 
-                    style={styles.quantityButton}
-                    onPress={() => onUpdateQuantity(1)}
-                  >
-                    <Text style={styles.quantityButtonText}>+</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity 
-                  style={[styles.buyButton, loading && styles.buyButtonDisabled]}
-                  onPress={onBuy}
-                  disabled={loading}
-                >
-                  <ShoppingCart size={20} color="#ffffff" style={styles.buttonIcon} />
-                  <Text style={styles.buyButtonText}>
-                    {loading ? 'Processing...' : 'Buy Now'}
-                  </Text>
-                </TouchableOpacity>
+              <View style={styles.statDivider} />
+              <View style={styles.stat}>
+                <Text style={styles.statValue}>4.8</Text>
+                <Text style={styles.statLabel}>Rating</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.stat}>
+                <Text style={styles.statValue}>100+</Text>
+                <Text style={styles.statLabel}>Sold</Text>
               </View>
             </View>
-          </ScrollView>
+
+            <View style={styles.descriptionSection}>
+              <Text style={styles.sectionTitle}>Description</Text>
+              <Text style={styles.modalDescription}>{product?.description}</Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.bottomBar}>
+          <View style={styles.quantitySelector}>
+            <TouchableOpacity 
+              style={styles.quantityButton}
+              onPress={() => onUpdateQuantity(-1)}
+            >
+              <Text style={styles.quantityButtonText}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.quantityText}>{quantity}</Text>
+            <TouchableOpacity 
+              style={styles.quantityButton}
+              onPress={() => onUpdateQuantity(1)}
+            >
+              <Text style={styles.quantityButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.buyButton, loading && styles.buyButtonDisabled]}
+            onPress={onBuy}
+            disabled={loading}
+          >
+            <ShoppingCart size={20} color="#ffffff" style={styles.buttonIcon} />
+            <Text style={styles.buyButtonText}>
+              {loading ? 'Processing...' : 'Buy Now'}
+            </Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -118,112 +155,154 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '90%',
   },
-  closeButton: {
-    position: 'absolute',
-    right: 16,
-    top: 16,
-    zIndex: 1,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 20,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  headerButton: {
     padding: 8,
   },
   modalScroll: {
-    maxHeight: '100%',
+    flex: 1,
+  },
+  imageContainer: {
+    width: '100%',
+    aspectRatio: 1, // Makes container square
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalImage: {
     width: '100%',
-    height: 300,
-    backgroundColor: '#f8fafc',
+    height: '100%',
+    backgroundColor: '#ffffff',
   },
   modalInfo: {
     padding: 16,
   },
-  modalTitle: {
+  priceSection: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 12,
+  },
+  modalPrice: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#FF4747',
+  },
+  lowStock: {
+    marginLeft: 8,
+    color: '#FF4747',
+    fontSize: 14,
+  },
+  modalTitle: {
+    fontSize: 18,
+    color: '#1f2937',
+    marginBottom: 16,
+  },
+  statsSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  stat: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 4,
+  },
+  statDivider: {
+    width: 1,
+    height: '100%',
+    backgroundColor: '#e2e8f0',
+  },
+  descriptionSection: {
+    marginTop: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#1f2937',
     marginBottom: 8,
   },
-  modalPrice: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#2563eb',
-    marginBottom: 16,
-  },
   modalDescription: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
-    lineHeight: 24,
-    marginBottom: 16,
+    lineHeight: 20,
   },
-  stockInfo: {
+  bottomBar: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  stockLabel: {
-    fontSize: 16,
-    color: '#64748b',
-    marginRight: 8,
-  },
-  stockValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  buySection: {
-    marginTop: 16,
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    backgroundColor: '#fff',
   },
   quantitySelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+    padding: 4,
+    marginRight: 12,
   },
   quantityButton: {
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 6,
   },
   quantityButtonText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#1f2937',
   },
   quantityText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    marginHorizontal: 24,
+    marginHorizontal: 16,
+    minWidth: 24,
+    textAlign: 'center',
   },
   buyButton: {
-    backgroundColor: '#2563eb',
+    flex: 1,
+    backgroundColor: '#FF4747',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 8,
+    padding: 12,
+    borderRadius: 8,
   },
   buyButtonDisabled: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: '#fca5a5',
   },
   buttonIcon: {
     marginRight: 8,
   },
   buyButtonText: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
 });
