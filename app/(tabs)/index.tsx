@@ -1,675 +1,300 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Image,
-  Pressable,
   RefreshControl,
   TouchableOpacity,
-  Modal,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
+  FlatList,
+  Dimensions,
 } from 'react-native';
-import { router } from 'expo-router';
-import { useAuthStore } from '@/stores/auth';
-import {
-  Bell,
-  MapPin,
-  TrendingUp,
-  ThermometerSun,
-  Users,
-  Calendar,
+import { 
+  Search, 
+  ShoppingBag, 
+  Heart, 
+  Bell, 
   MessageCircle,
-  Send,
-  X,
+  Star,
+  TrendingUp 
 } from 'lucide-react-native';
-import mistralAIService from '../services/mistralAI';
-import { franc } from 'franc';
+import { productsApi, mediaUrl } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface Message {
-  id: string;
-  text: string;
-  sender: 'user' | 'bot';
-  timestamp: Date;
-}
+const { width } = Dimensions.get('window');
 
 export default function Home() {
-  const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: "Hello! I'm your AgroAssistant. How can I help you today?\n\nHabari! Mimi ni Msaidizi wa Kilimo. Nawezaje kukusaidia leo?",
-      sender: 'bot',
-      timestamp: new Date(),
-    },
-  ]);
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<ScrollView>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollToEnd({ animated: true });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const farmStats = {
-    totalBirds: 2500,
-    mortality: 0.5,
-    avgWeight: 1.8,
-    feedConsumption: 450,
-  };
-
-  const upcomingTasks = [
-    {
-      id: '1',
-      title: 'Vaccination Schedule',
-      date: 'Today, 2:30 PM',
-      type: 'health',
-      description: 'Newcastle Disease vaccination for Batch A',
-    },
-    {
-      id: '2',
-      title: 'Feed Delivery',
-      date: 'Tomorrow, 9:00 AM',
-      type: 'feed',
-      description: 'Layer feed delivery from Farm Supply Co.',
-    },
+  const categories = [
+    { id: 1, name: 'Broilers', icon: '🐔' },
+    { id: 2, name: 'Layers', icon: '🥚' },
+    { id: 3, name: 'Feed', icon: '🌾' },
+    { id: 4, name: 'Medicine', icon: '💊' },
+    { id: 5, name: 'Equipment', icon: '⚙️' },
   ];
 
-  const weatherInfo = {
-    temperature: 24,
-    humidity: 65,
-    condition: 'Partly Cloudy',
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  };
-
-  const handleSendMessage = async () => {
-    if (!message.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: message.trim(),
-      sender: 'user',
-      timestamp: new Date(),
+  // Fetch token on mount
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem('token');
+        if (storedToken) {
+          setToken(storedToken);
+        }
+      } catch (error) {
+        console.error('Error fetching token:', error);
+      }
     };
+    fetchToken();
+  }, []);
 
-    setMessages((prev) => [...prev, userMessage]);
-    setMessage('');
-    setIsTyping(true);
-
+  // Fetch products when token is available
+  const fetchProducts = async () => {
     try {
-      // Detect language (simplified)
-      const detectedLang = franc(message, { whitelist: ['eng', 'swh'] });
-      const language = detectedLang === 'swh' ? 'sw' : 'en';
-
-      const response = await mistralAIService.generateResponse(message, language);
-
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response,
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
+      const response = await productsApi.getAll();
+      setProducts(response.data);
     } catch (error) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: error instanceof Error 
-          ? error.message 
-          : "I'm sorry, I couldn't process your request. Please try again.",
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, errorMessage]);
+      console.error('Error fetching products:', error);
     } finally {
-      setIsTyping(false);
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (token) {
+      fetchProducts();
+    }
+  }, [token]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchProducts();
+    setRefreshing(false);
+  };
+
+  const renderCategoryItem = ({ item }) => (
+    <TouchableOpacity style={styles.categoryItem}>
+      <Text style={styles.categoryIcon}>{item.icon}</Text>
+      <Text style={styles.categoryName}>{item.name}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderProductItem = ({ item }) => (
+    <TouchableOpacity style={styles.productCard}>
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: mediaUrl + item.image }}
+          style={styles.productImage}
+          resizeMode="contain"
+        />
+      </View>
+      <View style={styles.productInfo}>
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.product_name}
+        </Text>
+        <Text style={styles.productDescription} numberOfLines={2}>
+          {item.description}
+        </Text>
+        <Text style={styles.productPrice}>
+          TSh {item.price.toLocaleString()}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
-    <>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.searchContainer}>
+          <Search size={20} color="#666" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search in Poultry Market"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        <TouchableOpacity style={styles.headerIcon}>
+          <Bell size={24} color="#333" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.headerIcon}>
+          <ShoppingBag size={24} color="#333" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
-        style={styles.container}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Header Section */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>
-              {user?.lastname
-                ? `Welcome back, ${user.lastname}`
-                : 'Welcome back!'}{' '}
-              {user?.firstname}
-            </Text>
+        {/* Categories */}
+        <FlatList
+          data={categories}
+          renderItem={renderCategoryItem}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesList}
+        />
 
-            <View style={styles.location}>
-              <MapPin size={16} color="#64748b" />
-              <Text style={styles.locationText}>Mbeya, Tanzania</Text>
-            </View>
-          </View>
-          <Pressable
-            style={styles.notificationButton}
-            // onPress={() => router.push('/notifications')}
-          >
-            <Bell size={24} color="#1f2937" />
-            <View style={styles.notificationBadge} />
-          </Pressable>
+        {/* Banners */}
+        <View style={styles.banner}>
+          <Image
+            source={require('../../assets/images/banner.jpg')}
+            style={styles.bannerImage}
+          />
+          
         </View>
 
-        {/* Weather Card */}
-        <View style={styles.weatherCard}>
-          <View style={styles.weatherInfo}>
-            <ThermometerSun size={24} color="#2563eb" />
-            <View style={styles.weatherDetails}>
-              <Text style={styles.weatherTemp}>
-                {weatherInfo.temperature}°C
-              </Text>
-              <Text style={styles.weatherDesc}>{weatherInfo.condition}</Text>
-            </View>
-          </View>
-          <Text style={styles.weatherHumidity}>
-            Humidity: {weatherInfo.humidity}%
-          </Text>
-        </View>
-
-        {/* Farm Statistics */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.sectionTitle}>Farm Overview</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Users size={20} color="#2563eb" />
-              <Text style={styles.statValue}>{farmStats.totalBirds}</Text>
-              <Text style={styles.statLabel}>Total Birds</Text>
-            </View>
-            <View style={styles.statCard}>
-              <TrendingUp size={20} color="#2563eb" />
-              <Text style={styles.statValue}>{farmStats.mortality}%</Text>
-              <Text style={styles.statLabel}>Mortality Rate</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Calendar size={20} color="#2563eb" />
-              <Text style={styles.statValue}>{farmStats.avgWeight}kg</Text>
-              <Text style={styles.statLabel}>Avg Weight</Text>
-            </View>
-            <View style={styles.statCard}>
-              <ThermometerSun size={20} color="#2563eb" />
-              <Text style={styles.statValue}>{farmStats.feedConsumption}kg</Text>
-              <Text style={styles.statLabel}>Feed Used</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Upcoming Tasks */}
+        {/* Featured Products */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today's Tasks</Text>
-          {upcomingTasks.map((task) => (
-            <Pressable
-              key={task.id}
-              style={styles.taskCard}
-              // onPress={() => router.push(/task/${task.id})}
-            >
-              <View style={styles.taskHeader}>
-                <Text style={styles.taskTitle}>{task.title}</Text>
-                <Text style={styles.taskDate}>{task.date}</Text>
-              </View>
-              <Text style={styles.taskDescription}>{task.description}</Text>
-            </Pressable>
-          ))}
+          <Text style={styles.sectionTitle}>Featured Products</Text>
+          <FlatList
+            data={products}
+            renderItem={renderProductItem}
+            numColumns={2}
+            columnWrapperStyle={styles.productRow}
+            keyExtractor={item => item.id.toString()}
+          />
         </View>
       </ScrollView>
-
-      {/* FAB */}
-      <TouchableOpacity
-        style={styles.fabButton}
-        onPress={() => setIsChatOpen(true)}
-      >
-        <MessageCircle size={24} color="#fff" />
-      </TouchableOpacity>
-
-      {/* Chat Modal */}
-      <Modal
-        visible={isChatOpen}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsChatOpen(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContainer}
-        >
-          <View style={styles.chatContainer}>
-            <View style={styles.chatHeader}>
-              <View style={styles.chatHeaderLeft}>
-                <Image 
-                  source={require('../../assets/images/bot-avatar.png')} 
-                  style={styles.botAvatar} 
-                />
-                <View>
-                  <Text style={styles.chatTitle}>AgroAssistant</Text>
-                  <Text style={styles.chatSubtitle}>Poultry Expert</Text>
-                </View>
-              </View>
-              <TouchableOpacity
-                onPress={() => setIsChatOpen(false)}
-                style={styles.closeButton}
-              >
-                <X size={24} color="#1f2937" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView 
-              ref={messagesEndRef} 
-              style={styles.messagesContainer}
-              contentContainerStyle={styles.messagesContent}
-            >
-              {messages.map((msg) => (
-                <View
-                  key={msg.id}
-                  style={[
-                    styles.messageWrapper,
-                    msg.sender === 'user' ? styles.userMessage : styles.botMessage,
-                  ]}
-                >
-                  {msg.sender === 'bot' && (
-                    <Image 
-                      source={require('../../assets/images/bot-avatar.png')} 
-                      style={styles.messageBotAvatar} 
-                    />
-                  )}
-                  <View style={[
-                    styles.messageContent,
-                    msg.sender === 'user' ? styles.userMessageContent : styles.botMessageContent,
-                  ]}>
-                    <Text style={[
-                      styles.messageText,
-                      msg.sender === 'user' ? styles.userMessageText : styles.botMessageText,
-                    ]}>
-                      {msg.text}
-                    </Text>
-                    <Text style={[
-                      styles.messageTime,
-                      msg.sender === 'user' ? styles.userMessageTime : styles.botMessageTime,
-                    ]}>
-                      {msg.timestamp.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-              {isTyping && (
-                <View style={[styles.messageWrapper, styles.botMessage]}>
-                  <Image 
-                    source={require('../../assets/images/bot-avatar.png')} 
-                    style={styles.messageBotAvatar} 
-                  />
-                  <View style={styles.typingIndicator}>
-                    <View style={styles.typingDots}>
-                      <View style={[styles.dot, styles.dot1]} />
-                      <View style={[styles.dot, styles.dot2]} />
-                      <View style={[styles.dot, styles.dot3]} />
-                    </View>
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Ask about poultry farming..."
-                placeholderTextColor="#94a3b8"
-                value={message}
-                onChangeText={setMessage}
-                multiline
-                maxLength={500}
-              />
-              <TouchableOpacity
-                style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
-                onPress={handleSendMessage}
-                disabled={!message.trim()}
-              >
-                <Send size={20} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  statsContainer: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-    padding: 16,
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    width: '48%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginTop: 8,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 4,
-  },
-  section: {
-    padding: 24,
-  },
-  taskCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  taskHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  taskTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1f2937',
-  },
-  taskDate: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  taskDescription: {
-    fontSize: 14,
-    color: '#64748b',
+    backgroundColor: '#f5f5f5',
   },
   header: {
-    marginTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  greeting: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  location: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    padding: 12,
+    backgroundColor: '#FF4747',
+    paddingTop: 48,
   },
-  locationText: {
-    marginLeft: 4,
-    fontSize: 14,
-    color: '#64748b',
-  },
-  notificationButton: {
-    position: 'relative',
-    padding: 10,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    backgroundColor: '#ef4444',
-    borderRadius: 4,
-  },
-  weatherCard: {
-    backgroundColor: '#f8fafc',
-    marginHorizontal: 20,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  weatherInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  weatherDetails: {
-    marginLeft: 12,
-  },
-  weatherTemp: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1f2937',
-  },
-  weatherDesc: {
-    fontSize: 14,
-    color: '#475569',
-  },
-  weatherHumidity: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#64748b',
-  },
-  fabButton: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    backgroundColor: '#2563eb',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  modalContainer: {
+  searchContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  chatContainer: {
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff',
-    marginTop: 60,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: 'hidden',
-  },
-  chatHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#f8fafc',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  chatHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  botAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    borderRadius: 4,
+    paddingHorizontal: 12,
     marginRight: 12,
+    height: 36,
   },
-  chatTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  chatSubtitle: {
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
     fontSize: 14,
-    color: '#64748b',
   },
-  closeButton: {
+  headerIcon: {
     padding: 8,
   },
-  messagesContainer: {
-    flex: 1,
-    padding: 16,
+  categoriesList: {
+    backgroundColor: '#fff',
+    paddingVertical: 12,
   },
-  messagesContent: {
-    paddingBottom: 16,
+  categoryItem: {
+    alignItems: 'center',
+    marginHorizontal: 12,
+    width: 60,
   },
-  messageWrapper: {
-    maxWidth: '80%',
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-  },
-  userMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#2563eb',
-  },
-  botMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#f1f5f9',
-  },
-  messageBotAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 8,
-  },
-  messageContent: {
-    padding: 12,
-    borderRadius: 16,
-  },
-  userMessageContent: {
-    backgroundColor: '#2563eb',
-  },
-  botMessageContent: {
-    backgroundColor: '#f1f5f9',
-  },
-  messageText: {
-    fontSize: 16,
+  categoryIcon: {
+    fontSize: 24,
     marginBottom: 4,
   },
-  userMessageText: {
-    color: '#fff',
-  },
-  botMessageText: {
-    color: '#1f2937',
-  },
-  messageTime: {
+  categoryName: {
     fontSize: 12,
-    alignSelf: 'flex-end',
+    color: '#666',
+    textAlign: 'center',
   },
-  userMessageTime: {
-    color: '#94a3b8',
+  banner: {
+    marginVertical: 12,
+    paddingHorizontal: 12,
   },
-  botMessageTime: {
-    color: '#64748b',
+  bannerImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+  section: {
+    padding: 12,
     backgroundColor: '#fff',
   },
-  input: {
-    flex: 1,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
+  sectionTitle: {
     fontSize: 16,
-    maxHeight: 100,
-  },
-  sendButton: {
-    width: 40,
-    height: 40,
-    backgroundColor: '#2563eb',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#94a3b8',
-  },
-  typingIndicator: {
-    padding: 12,
-    borderRadius: 16,
-    backgroundColor: '#f1f5f9',
-    alignSelf: 'flex-start',
+    fontWeight: 'bold',
     marginBottom: 12,
   },
-  typingDots: {
+  productRow: {
+    justifyContent: 'space-between',
+  },
+  productCard: {
+    width: (width - 36) / 2,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  imageContainer: {
+    width: '100%',
+    height: (width - 36) / 2,
+    backgroundColor: '#f8fafc',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    overflow: 'hidden',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+  productInfo: {
+    padding: 8,
+  },
+  productName: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  productDescription: {
+    fontSize: 12,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF4747',
+    marginBottom: 4,
+  },
+  productMeta: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  dot: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#64748b',
-    borderRadius: 4,
-    marginHorizontal: 2,
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  dot1: {
-    animationDelay: '0s',
+  ratingText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
   },
-  dot2: {
-    animationDelay: '0.2s',
-  },
-  dot3: {
-    animationDelay: '0.4s',
+  salesText: {
+    fontSize: 12,
+    color: '#666',
   },
 });
