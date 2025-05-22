@@ -10,6 +10,8 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Search, ShoppingCart, Minus, Plus } from 'lucide-react-native';
@@ -83,13 +85,11 @@ export default function ShopProfile() {
 
   const fetchLocation = async () => {
     try {
-      // Check for cached location
       const cachedLocation = await AsyncStorage.getItem('userLocation');
       if (cachedLocation) {
         return JSON.parse(cachedLocation);
       }
 
-      // Request permission
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
@@ -100,13 +100,12 @@ export default function ShopProfile() {
         return null;
       }
 
-      // Get current position with timeout and balanced accuracy
       const location = await Promise.race([
         Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced, // Faster with reasonable accuracy
+          accuracy: Location.Accuracy.Balanced,
         }),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Location request timed out')), 10000) // 10s timeout
+          setTimeout(() => reject(new Error('Location request timed out')), 10000)
         ),
       ]);
 
@@ -114,7 +113,6 @@ export default function ShopProfile() {
         throw new Error('Failed to get location');
       }
 
-      // Use Google Maps Geocoding API for reverse geocoding
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.coords.latitude},${location.coords.longitude}&key=${GOOGLE_API_KEY}`
       );
@@ -129,7 +127,6 @@ export default function ShopProfile() {
       let region = null;
       let country = null;
 
-      // Extract address components
       for (const component of address.address_components) {
         if (component.types.includes('locality')) {
           city = component.long_name;
@@ -150,7 +147,6 @@ export default function ShopProfile() {
         longitude: location.coords.longitude,
       };
 
-      // Cache the location data
       await AsyncStorage.setItem('userLocation', JSON.stringify(locationData));
 
       return locationData;
@@ -261,130 +257,101 @@ export default function ShopProfile() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <Search size={20} color="#64748b" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search products....."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#94a3b8"
-        />
+      <View style={styles.header}>
+        <View style={styles.searchContainer}>
+          <Search size={20} color="#666" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search products....."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#666"
+          />
+        </View>
+        <TouchableOpacity style={styles.headerIcon}>
+          <ShoppingCart size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        style={styles.scrollView}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {filteredProducts.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No products available</Text>
-          </View>
-        ) : (
-          filteredProducts.map((product) => (
-            <TouchableOpacity
-              key={product.id}
-              style={styles.productCard}
-              onPress={() => handleProductPress(product)}
-            >
-              <View style={styles.imageContainer}>
-                <Image
-                  source={{
-                    uri: mediaUrl + product.image,
-                    cache: 'reload',
-                    headers: {
-                      'Cache-Control': 'no-cache',
-                    },
-                  }}
-                  style={styles.productImage}
-                  onLoadStart={() =>
-                    setImageLoading({ ...imageLoading, [product.id]: true })
-                  }
-                  onLoadEnd={() =>
-                    setImageLoading({ ...imageLoading, [product.id]: false })
-                  }
-                  onError={() =>
-                    setImageLoadErrors({ ...imageLoadErrors, [product.id]: true })
-                  }
-                  resizeMode="contain"
-                />
-                {imageLoading[product.id] && (
-                  <View style={styles.imageLoadingOverlay}>
-                    <ActivityIndicator size="large" color="#2563eb" />
-                  </View>
-                )}
-                {imageLoadErrors[product.id] && (
-                  <View style={styles.imageErrorOverlay}>
-                    <ShoppingCart size={32} color="#94a3b8" />
-                    <Text style={styles.imageErrorText}>Failed to load image</Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.productInfo}>
-                <Text
-                  style={styles.productName}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {product.product_name}
-                </Text>
-                <Text
-                  style={styles.productDescription}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {product.description}
-                </Text>
-                <View style={styles.priceAndQuantity}>
-                  <Text style={styles.productPrice}>
-                    TSH{' '}
-                    {(product.price * (selectedQuantities[product.id] || 1)).toFixed(2)}
-                  </Text>
-                  <View style={styles.quantityContainer}>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() => updateQuantity(product.id, -1)}
-                    >
-                      <Minus size={16} color="#64748b" />
-                    </TouchableOpacity>
-                    <Text style={styles.quantityText}>
-                      {selectedQuantities[product.id] || 1}
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() => updateQuantity(product.id, 1)}
-                    >
-                      <Plus size={16} color="#64748b" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
+        <View style={styles.productsGrid}>
+          {filteredProducts.length === 0 ? (
+            <View style={styles.emptyState}>
+              <ShoppingCart size={48} color="#94a3b8" />
+              <Text style={styles.emptyStateText}>No products available</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredProducts}
+              renderItem={({ item: product }) => (
                 <TouchableOpacity
-                  style={[
-                    styles.buyButton,
-                    itemLoading[product.id] && styles.buyButtonDisabled,
-                  ]}
-                  onPress={() => handleBuyNow(product)}
-                  disabled={itemLoading[product.id]}
+                  style={styles.productCard}
+                  onPress={() => handleProductPress(product)}
                 >
-                  {itemLoading[product.id] ? (
-                    <ActivityIndicator size="small" color="#ffffff" />
-                  ) : (
-                    <>
-                      <ShoppingCart
-                        size={20}
-                        color="#ffffff"
-                        style={styles.buttonIcon}
-                      />
-                      <Text style={styles.buyButtonText}>Buy Now</Text>
-                    </>
-                  )}
+                  <View style={styles.imageContainer}>
+                    <Image
+                      source={{
+                        uri: mediaUrl + product.image,
+                        headers: { 'Cache-Control': 'no-cache' },
+                      }}
+                      style={styles.productImage}
+                      resizeMode="cover"
+                    />
+                    {imageLoading[product.id] && (
+                      <View style={styles.imageLoadingOverlay}>
+                        <ActivityIndicator size="large" color="#FF4747" />
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.productInfo}>
+                    <Text style={styles.productName} numberOfLines={2}>
+                      {product.product_name}
+                    </Text>
+                    <Text style={styles.productPrice}>
+                      TSh {(product.price * (selectedQuantities[product.id] || 1)).toLocaleString()}
+                    </Text>
+                    <View style={styles.quantityContainer}>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() => updateQuantity(product.id, -1)}
+                      >
+                        <Minus size={16} color="#666" />
+                      </TouchableOpacity>
+                      <Text style={styles.quantityText}>
+                        {selectedQuantities[product.id] || 1}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() => updateQuantity(product.id, 1)}
+                      >
+                        <Plus size={16} color="#666" />
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.buyButton, itemLoading[product.id] && styles.buyButtonDisabled]}
+                      onPress={() => handleBuyNow(product)}
+                      disabled={itemLoading[product.id]}
+                    >
+                      {itemLoading[product.id] ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : (
+                        <Text style={styles.buyButtonText}>Buy Now</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))
-        )}
+              )}
+              numColumns={2}
+              columnWrapperStyle={styles.productRow}
+              keyExtractor={item => item.id.toString()}
+            />
+          )}
+        </View>
       </ScrollView>
 
       <ProductDetailsModal
@@ -401,68 +368,130 @@ export default function ShopProfile() {
     </View>
   );
 }
+
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f5f5f5',
   },
-  searchContainer: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    margin: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    height: 48,
+    padding: 12,
+    backgroundColor: '#FF4747',
+    paddingTop: 48,
+  },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    paddingHorizontal: 12,
+    marginRight: 12,
+    height: 36,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#333',
+  },
+  headerIcon: {
+    padding: 8,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  productsGrid: {
+    padding: 8,
+  },
+  productRow: {
+    justifyContent: 'space-between',
+  },
+  productCard: {
+    width: (width - 36) / 2,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 12,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-    marginTop: 29,
+    overflow: 'hidden',
   },
-  searchIcon: {
-    marginRight: 12,
+  imageContainer: {
+    width: '100%',
+    height: (width - 36) / 2,
+    backgroundColor: '#f8fafc',
   },
-  searchInput: {
-    flex: 1,
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+  productInfo: {
+    padding: 8,
+  },
+  productName: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 4,
+  },
+  productPrice: {
     fontSize: 16,
-    color: '#1f2937',
+    fontWeight: 'bold',
+    color: '#FF4747',
+    marginBottom: 8,
   },
-  scrollContent: {
-    padding: 16,
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 4,
+    padding: 4,
+    marginBottom: 8,
+  },
+  quantityButton: {
+    padding: 4,
+  },
+  quantityText: {
+    fontSize: 14,
+    color: '#333',
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  buyButton: {
+    backgroundColor: '#FF4747',
+    paddingVertical: 8,
+    borderRadius: 4,
+    alignItems: 'center',
+  },
+  buyButtonDisabled: {
+    backgroundColor: '#fca5a5',
+  },
+  buyButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 8,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  productCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    overflow: 'hidden',
-    transform: [{ scale: 1 }], // Add this for press animation
-  },
-  productCardPressed: {
-    transform: [{ scale: 0.98 }],
-  },
-  imageContainer: {
-    position: 'relative',
-    width: '100%',
-    height: 200, // Reduced height
-    backgroundColor: '#f8fafc',
-    overflow: 'hidden',
-  },
-  productImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f8fafc',
   },
   imageLoadingOverlay: {
     position: 'absolute',
@@ -473,102 +502,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  imageErrorOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#f8fafc',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageErrorText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#64748b',
-  },
-  productInfo: {
-    padding: 12, // Reduced padding
-  },
-  productName: {
-    fontSize: 16, // Reduced font size
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  productPrice: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2563eb',
-  },
-  productDescription: {
-    fontSize: 14, // Reduced font size
-    color: '#64748b',
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  priceAndQuantity: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
-    padding: 4,
-  },
-  quantityButton: {
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  quantityText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginHorizontal: 16,
-    minWidth: 24,
-    textAlign: 'center',
-  },
-  buyButton: {
-    backgroundColor: '#2563eb',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  buyButtonDisabled: {
-    backgroundColor: '#93c5fd',
-  },
-  buttonIcon: {
-    marginRight: 8,
-  },
-  buyButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 50,
-  },
-  emptyStateText: {
-    fontSize: 18,
-    color: '#64748b',
   },
 });
