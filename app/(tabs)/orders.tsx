@@ -11,7 +11,7 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
-import { Package2, Calendar, DollarSign, Store, Check, X } from 'lucide-react-native';
+import { Package2, Calendar, DollarSign, Store, Check, ArrowLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import apiz from '../services/api';
 import { mediaUrl } from '../services/api';
@@ -46,7 +46,7 @@ export default function Orders() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateOrderStatus = async (orderId: number, newStatus: 'completed' | 'cancelled') => {
+  const updateOrderStatus = async (orderId: number, newStatus: 'completed') => {
     try {
       await apiz.patch(`/purchases/${orderId}/status`, { status: newStatus });
       // Update local state
@@ -107,7 +107,13 @@ export default function Orders() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Orders</Text>
+        <Text style={styles.title}>Orders</Text>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity style={styles.filterButton}>
+            <Text style={styles.filterText}>All Orders</Text>
+            <ArrowLeft size={16} color="#64748b" style={{ transform: [{ rotate: '-90deg' }] }} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -219,27 +225,6 @@ export default function Orders() {
                     <Check size={20} color="#fff" style={styles.actionIcon} />
                     <Text style={styles.actionButtonText}>Mark as Received</Text>
                   </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.cancelButton]}
-                    onPress={() => {
-                      Alert.alert(
-                        'Cancel Order',
-                        'Are you sure you want to cancel this order?',
-                        [
-                          { text: 'No', style: 'cancel' },
-                          {
-                            text: 'Yes, Cancel',
-                            style: 'destructive',
-                            onPress: () => updateOrderStatus(order.id, 'cancelled')
-                          }
-                        ]
-                      );
-                    }}
-                  >
-                    <X size={20} color="#dc2626" style={styles.actionIcon} />
-                    <Text style={styles.cancelButtonText}>Cancel Order</Text>
-                  </TouchableOpacity>
                 </View>
               )}
             </View>
@@ -257,15 +242,36 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
     paddingTop: 60,
+    backgroundColor: '#FF4747',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1e293b',
+    color: '#ffffff',
+    marginBottom: 12,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  filterText: {
+    color: '#64748b',
+    marginRight: 4,
+    fontSize: 14,
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
@@ -304,10 +310,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginHorizontal: 16,
     marginVertical: 8,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
   },
   shopHeader: {
     flexDirection: 'row',
@@ -346,20 +357,22 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e2e8f0',
   },
   statusContainer: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
     backgroundColor: '#f1f5f9',
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   statusCompleted: {
     color: '#059669',
+    backgroundColor: '#dcfce7',
   },
   statusPending: {
     color: '#d97706',
+    backgroundColor: '#fef3c7',
   },
   statusCancelled: {
     color: '#dc2626',
@@ -378,18 +391,19 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   productImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
   },
   productInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 16,
   },
   productName: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#1e293b',
+    fontWeight: '600',
+    color: '#1f2937',
     marginBottom: 8,
   },
   orderDetails: {
@@ -406,9 +420,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   priceText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2563eb',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FF4747',
     marginLeft: 4,
   },
   actionButtons: {
@@ -416,36 +430,26 @@ const styles = StyleSheet.create({
     padding: 12,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    gap: 8,
+    backgroundColor: '#f8fafc',
   },
   actionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   receiveButton: {
-    backgroundColor: '#2563eb',
-  },
-  cancelButton: {
-    backgroundColor: '#fee2e2',
-    borderWidth: 1,
-    borderColor: '#dc2626',
+    backgroundColor: '#FF4747',
   },
   actionIcon: {
     marginRight: 8,
   },
   actionButtonText: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  cancelButtonText: {
-    color: '#dc2626',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
