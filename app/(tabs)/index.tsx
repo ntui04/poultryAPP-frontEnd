@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,22 +8,35 @@ import {
   RefreshControl,
   TouchableOpacity,
   TextInput,
-  FlatList,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
   Dimensions,
+  FlatList,
 } from 'react-native';
-import { 
-  Search, 
-  ShoppingBag, 
-  Heart, 
-  Bell, 
+import {
+  Search,
+  ShoppingBag,
+  Heart,
+  Bell,
   MessageCircle,
-  Star,
-  TrendingUp 
+  Send,
+  X,
 } from 'lucide-react-native';
-import { productsApi, mediaUrl } from '../services/api';
+import mistralAIService from '../services/mistralAI';
+import { franc } from 'franc';
+import { mediaUrl } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { productsApi } from '../services/api';
 
 const { width } = Dimensions.get('window');
+
+interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
+}
 
 export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
@@ -31,6 +44,70 @@ export default function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      text: "Hello! I'm your AgroAssistant. How can I help you today?\n\nHabari! Mimi ni Msaidizi wa Kilimo. Nawezaje kukusaidia leo?",
+      sender: 'bot',
+      timestamp: new Date(),
+    },
+  ]);
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<ScrollView>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollToEnd({ animated: true });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: message.trim(),
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setMessage('');
+    setIsTyping(true);
+
+    try {
+      const detectedLang = franc(message, { whitelist: ['eng', 'swh'] });
+      const language = detectedLang === 'swh' ? 'sw' : 'en';
+
+      const response = await mistralAIService.generateResponse(message, language);
+
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: response,
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: error instanceof Error 
+          ? error.message 
+          : "I'm sorry, I couldn't process your request. Please try again.",
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
 
   const categories = [
     { id: 1, name: 'Broilers', icon: '🐔' },
@@ -165,6 +242,125 @@ export default function Home() {
           />
         </View>
       </ScrollView>
+
+      {/* Chat FAB */}
+      <TouchableOpacity
+        style={styles.fabButton}
+        onPress={() => setIsChatOpen(true)}
+      >
+        <MessageCircle size={24} color="#fff" />
+      </TouchableOpacity>
+
+      {/* Chat Modal */}
+      <Modal
+        visible={isChatOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsChatOpen(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <View style={styles.chatContainer}>
+            <View style={styles.chatHeader}>
+              <View style={styles.chatHeaderLeft}>
+                <Image 
+                  source={require('../../assets/images/bot-avatar.png')} 
+                  style={styles.botAvatar} 
+                />
+                <View>
+                  <Text style={styles.chatTitle}>AgroAssistant</Text>
+                  <Text style={styles.chatSubtitle}>Poultry Expert</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setIsChatOpen(false)}
+                style={styles.closeButton}
+              >
+                <X size={24} color="#1f2937" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView 
+              ref={messagesEndRef} 
+              style={styles.messagesContainer}
+              contentContainerStyle={styles.messagesContent}
+            >
+              {messages.map((msg) => (
+                <View
+                  key={msg.id}
+                  style={[
+                    styles.messageWrapper,
+                    msg.sender === 'user' ? styles.userMessage : styles.botMessage,
+                  ]}
+                >
+                  {msg.sender === 'bot' && (
+                    <Image 
+                      source={require('../../assets/images/bot-avatar.png')} 
+                      style={styles.messageBotAvatar} 
+                    />
+                  )}
+                  <View style={[
+                    styles.messageContent,
+                    msg.sender === 'user' ? styles.userMessageContent : styles.botMessageContent,
+                  ]}>
+                    <Text style={[
+                      styles.messageText,
+                      msg.sender === 'user' ? styles.userMessageText : styles.botMessageText,
+                    ]}>
+                      {msg.text}
+                    </Text>
+                    <Text style={[
+                      styles.messageTime,
+                      msg.sender === 'user' ? styles.userMessageTime : styles.botMessageTime,
+                    ]}>
+                      {msg.timestamp.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+              {isTyping && (
+                <View style={[styles.messageWrapper, styles.botMessage]}>
+                  <Image 
+                    source={require('../../assets/images/bot-avatar.png')} 
+                    style={styles.messageBotAvatar} 
+                  />
+                  <View style={styles.typingIndicator}>
+                    <View style={styles.typingDots}>
+                      <View style={[styles.dot, styles.dot1]} />
+                      <View style={[styles.dot, styles.dot2]} />
+                      <View style={[styles.dot, styles.dot3]} />
+                    </View>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Ask about poultry farming..."
+                placeholderTextColor="#94a3b8"
+                value={message}
+                onChangeText={setMessage}
+                multiline
+                maxLength={500}
+              />
+              <TouchableOpacity
+                style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
+                onPress={handleSendMessage}
+                disabled={!message.trim()}
+              >
+                <Send size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -296,5 +492,161 @@ const styles = StyleSheet.create({
   salesText: {
     fontSize: 12,
     color: '#666',
+  },
+  fabButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    backgroundColor: '#FF4747',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  chatContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    marginTop: 60,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  chatHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  botAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  chatTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  chatSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  closeButton: {
+    padding: 8,
+  },
+  messagesContainer: {
+    flex: 1,
+  },
+  messagesContent: {
+    paddingBottom: 16,
+  },
+  messageWrapper: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  userMessage: {
+    justifyContent: 'flex-end',
+  },
+  botMessage: {
+    justifyContent: 'flex-start',
+  },
+  messageBotAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  messageContent: {
+    maxWidth: '80%',
+    padding: 8,
+    borderRadius: 8,
+  },
+  userMessageContent: {
+    backgroundColor: '#FF4747',
+  },
+  botMessageContent: {
+    backgroundColor: '#f3f4f6',
+  },
+  messageText: {
+    fontSize: 14,
+  },
+  userMessageText: {
+    color: '#fff',
+  },
+  botMessageText: {
+    color: '#1f2937',
+  },
+  messageTime: {
+    fontSize: 10,
+    marginTop: 4,
+  },
+  userMessageTime: {
+    color: '#f3f4f6',
+  },
+  botMessageTime: {
+    color: '#6b7280',
+  },
+  typingIndicator: {
+    backgroundColor: '#f3f4f6',
+    padding: 8,
+    borderRadius: 8,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 24,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#6b7280',
+  },
+  dot1: {
+    animationDelay: '0s',
+  },
+  dot2: {
+    animationDelay: '0.2s',
+  },
+  dot3: {
+    animationDelay: '0.4s',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#1f2937',
+  },
+  sendButton: {
+    marginLeft: 8,
+    backgroundColor: '#FF4747',
+    borderRadius: 8,
+    padding: 8,
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#f3f4f6',
   },
 });
