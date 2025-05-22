@@ -164,53 +164,59 @@ const Profile = () => {
     <ScrollView style={styles.container}>
       {/* Profile Header */}
       <View style={styles.header}>
-        <View style={styles.profileImageContainer}>
-          {user?.profileImage ? (
-            <Image 
-              source={{ uri: user.profileImage }} 
-              style={styles.profileImage} 
-            />
-          ) : (
-            <View style={styles.profileInitials}>
-              <Text style={styles.initialsText}>
-                {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
-              </Text>
-            </View>
-          )}
-        </View>
-        
-        <Text style={styles.userName}>{user?.firstname || ''}  {user?.lastname}</Text>
-        <Text style={styles.userEmail}>{user?.phone_number}</Text>
-        
-        <Pressable 
-          style={styles.editProfileButton}
-          onPress={() => router.push('../userprofile/')}
-        >
-          <Text style={styles.editProfileText}>Edit Profile</Text>
-        </Pressable>
-      </View>
-
-      {/* Profile Options */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Profile</Text>
-        <View style={styles.optionsContainer}>
-          {profileOptions.map(option => renderOption(option))}
+        <View style={styles.headerContent}>
+          <View style={styles.profileImageContainer}>
+            {user?.profileImage ? (
+              <Image 
+                source={{ uri: user.profileImage }} 
+                style={styles.profileImage} 
+              />
+            ) : (
+              <View style={styles.profileInitials}>
+                <Text style={styles.initialsText}>
+                  {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                </Text>
+              </View>
+            )}
+          </View>
+          
+          <Text style={styles.userName}>{user?.firstname || ''}  {user?.lastname}</Text>
+          <Text style={styles.userEmail}>{user?.phone_number}</Text>
+          
+          <Pressable 
+            style={styles.editProfileButton}
+            onPress={() => router.push('../userprofile/')}
+          >
+            <User size={16} color="#FF4747" style={styles.editProfileIcon} />
+            <Text style={styles.editProfileText}>Edit Profile</Text>
+          </Pressable>
         </View>
       </View>
 
-      {/* Account Options */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
-        <View style={styles.optionsContainer}>
-          {accountOptions.map(option => renderOption(option))}
+      {/* Options Sections */}
+      <View style={styles.content}>
+        {/* Profile Options */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Profile</Text>
+          <View style={styles.optionsContainer}>
+            {profileOptions.map(option => renderOption(option))}
+          </View>
         </View>
-      </View>
 
-      {/* Support Options */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Support</Text>
-        <View style={styles.optionsContainer}>
-          {supportOptions.map(option => renderOption(option))}
+        {/* Account Options */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          <View style={styles.optionsContainer}>
+            {accountOptions.map(option => renderOption(option))}
+          </View>
+        </View>
+
+        {/* Support Options */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Support</Text>
+          <View style={styles.optionsContainer}>
+            {supportOptions.map(option => renderOption(option))}
+          </View>
         </View>
       </View>
 
@@ -219,7 +225,7 @@ const Profile = () => {
         style={styles.logoutButton}
         onPress={handleLogout}
       >
-        <LogOut size={20} color="#ef4444" />
+        <LogOut size={20} color="#FF4747" />
         <Text style={styles.logoutText}>Logout</Text>
       </Pressable>
 
@@ -235,19 +241,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   header: {
+    backgroundColor: '#FF4747',
+    paddingTop: 60,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: 20,
+  },
+  headerContent: {
     alignItems: 'center',
-    paddingVertical: 40,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    paddingVertical: 30,
+    paddingHorizontal: 20,
   },
   profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     marginBottom: 16,
     overflow: 'hidden',
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+    borderWidth: 4,
+    borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   profileImage: {
     width: '100%',
@@ -256,54 +274,69 @@ const styles = StyleSheet.create({
   profileInitials: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#bfdbfe',
+    backgroundColor: '#fff2f2',
     alignItems: 'center',
     justifyContent: 'center',
   },
   initialsText: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: 'bold',
-    color: '#2563eb',
+    color: '#FF4747',
   },
   userName: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: '#ffffff',
     marginBottom: 4,
   },
   userEmail: {
-    fontSize: 20,
-    color: '#64748b',
-    marginBottom: 16,
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 20,
   },
   editProfileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#ffffff',
     borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  editProfileIcon: {
+    marginRight: 8,
   },
   editProfileText: {
-    color: '#2563eb',
-    fontWeight: '500',
+    color: '#FF4747',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  content: {
+    paddingHorizontal: 16,
   },
   section: {
-    padding: 24,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1f2937',
     marginBottom: 16,
+    paddingHorizontal: 4,
   },
   optionsContainer: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   optionItem: {
     flexDirection: 'row',
@@ -322,21 +355,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1f2937',
     marginLeft: 16,
+    fontWeight: '500',
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 24,
-    marginHorizontal: 24,
+    marginHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#fee2e2',
-    borderRadius: 12,
+    backgroundColor: '#fff2f2',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
   },
   logoutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ef4444',
+    color: '#FF4747',
     marginLeft: 8,
   },
   versionText: {

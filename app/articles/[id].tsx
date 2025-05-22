@@ -34,8 +34,6 @@ export default function ArticleScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
 
-  // const mediaUrl = 'http://192.168.90.32:8000/storage/';
-
   useEffect(() => {
     fetchArticle();
   }, [id]);
@@ -159,16 +157,14 @@ export default function ArticleScreen() {
         >
           <Heart
             size={24}
-            color={isLiked ? '#ef4444' : '#64748b'}
-            fill={isLiked ? '#ef4444' : 'none'}
+            color={isLiked ? '#FF4747' : '#64748b'}
+            fill={isLiked ? '#FF4747' : 'none'}
           />
           <Text style={[styles.actionText, isLiked && styles.actionTextActive]}>
             {isLiked ? 'Liked' : 'Like'}
           </Text>
         </Pressable>
-
-      
-
+        
         <Pressable style={styles.actionButton} onPress={handleShare}>
           <Share2 size={24} color="#64748b" />
           <Text style={styles.actionText}>Share</Text>
@@ -181,14 +177,15 @@ export default function ArticleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    paddingTop: 60,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
@@ -199,55 +196,55 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   coverImage: {
-    marginTop: 16,
     width: width,
     height: width * 0.75,
+    backgroundColor: '#f8fafc',
   },
   articleContent: {
-    padding: 16,
+    padding: 20,
   },
   categoryContainer: {
-    backgroundColor: '#e0f2fe',
+    backgroundColor: '#fff2f2',
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
     alignSelf: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   category: {
-    color: '#0284c7',
+    color: '#FF4747',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 16,
-    lineHeight: 32,
+    marginBottom: 20,
+    lineHeight: 36,
   },
   authorSection: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
-    paddingBottom: 16,
+    paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
   authorImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 16,
   },
   authorInfo: {
     flex: 1,
   },
   authorName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#1e293b',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   articleMeta: {
     flexDirection: 'row',
@@ -265,15 +262,19 @@ const styles = StyleSheet.create({
   readTimeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   readTime: {
     fontSize: 14,
     color: '#64748b',
-    marginLeft: 4,
+    marginLeft: 6,
   },
   content: {
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 28,
     color: '#334155',
   },
   footer: {
@@ -281,27 +282,33 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   actionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
+    marginHorizontal: 4,
+    borderRadius: 12,
   },
   actionButtonActive: {
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
+    backgroundColor: '#fff2f2',
   },
   actionText: {
     marginLeft: 8,
-    fontSize: 14,
+    fontSize: 15,
     color: '#64748b',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   actionTextActive: {
-    color: '#ef4444',
+    color: '#FF4747',
   },
   loadingContainer: {
     flex: 1,

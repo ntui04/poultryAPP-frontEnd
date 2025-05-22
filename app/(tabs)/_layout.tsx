@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { House, Store, MessageCircle, ShieldPlus,Newspaper, ShoppingBag } from 'lucide-react-native';
+import { House, Store, MessageCircle, User2, Notebook, ShoppingBag } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -8,61 +8,78 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: '#ffffff',
-          borderTopColor: '#e5e5e5',
-          height: 65,              // Increased height (default is ~50)
-          paddingBottom: 10,       // Add some padding at the bottom
-          paddingTop: 5,           // Add some padding at the top
+          borderTopColor: '#f1f5f9',
+          borderTopWidth: 1,
+          height: 65,
+          paddingBottom: 10,
+          paddingTop: 5,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          elevation: 8,
         },
-        tabBarActiveTintColor: '#000000',
-        tabBarInactiveTintColor: '#64748b', // Lighter color for inactive tabs
-        tabBarShowLabel: true,              // Hide tab labels
+        tabBarActiveTintColor: '#FF4747',
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarShowLabel: true,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          marginTop: -4,
+        },
       }}>
       <Tabs.Screen
-    name="index"
-    options={{
-      title: 'Home',
-      tabBarIcon: ({ color, size }) => <House size={size + 2} color={color} />, // Use House icon
-    }}
-  />
-      {/* Rest of your tab screens - with size + 2 for each icon */}
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <House size={size} color={color} strokeWidth={2} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="marketplace"
         options={{
           title: 'Shop',
-          tabBarIcon: ({ color, size }) => <Store size={size + 2} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Store size={size} color={color} strokeWidth={2} />
+          ),
         }}
       />
-
       <Tabs.Screen
         name="orders"
         options={{
           title: 'Orders',
-          tabBarIcon: ({ size, color }) => (
-            <ShoppingBag size={size} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <ShoppingBag size={size} color={color} strokeWidth={2} />
           ),
         }}
       />
-     
       <Tabs.Screen
         name="consultation"
         options={{
           title: 'consultation',
-          tabBarIcon: ({ color, size }) => <MessageCircle size={size + 2} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <MessageCircle size={size} color={color} strokeWidth={2} />
+          ),
         }}
-
       />
       <Tabs.Screen
         name="education"
         options={{
-          title: 'education',
-          tabBarIcon: ({ color, size }) => <Newspaper size={size + 2} color={color} />,
+          title: 'Learn',
+          tabBarIcon: ({ color, size }) => (
+            <Notebook size={size} color={color} strokeWidth={2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => <ShieldPlus size={size + 2} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <User2 size={size} color={color} strokeWidth={2} />
+          ),
         }}
       />
     </Tabs>
