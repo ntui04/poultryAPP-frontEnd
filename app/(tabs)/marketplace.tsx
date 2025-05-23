@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Image,
   RefreshControl,
   ActivityIndicator,
@@ -273,86 +272,80 @@ export default function ShopProfile() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
+      <FlatList
+        data={filteredProducts}
+        renderItem={({ item: product }) => (
+          <TouchableOpacity
+            style={styles.productCard}
+            onPress={() => handleProductPress(product)}
+          >
+            <View style={styles.imageContainer}>
+              <Image
+                source={{
+                  uri: mediaUrl + product.image,
+                  headers: { 'Cache-Control': 'no-cache' },
+                }}
+                style={styles.productImage}
+                resizeMode="cover"
+              />
+              {imageLoading[product.id] && (
+                <View style={styles.imageLoadingOverlay}>
+                  <ActivityIndicator size="large" color="#FF4747" />
+                </View>
+              )}
+            </View>
+            <View style={styles.productInfo}>
+              <Text style={styles.productName} numberOfLines={2}>
+                {product.product_name}
+              </Text>
+              <Text style={styles.productPrice}>
+                TSh {(product.price * (selectedQuantities[product.id] || 1)).toLocaleString()}
+              </Text>
+              <View style={styles.quantityContainer}>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => updateQuantity(product.id, -1)}
+                >
+                  <Minus size={16} color="#666" />
+                </TouchableOpacity>
+                <Text style={styles.quantityText}>
+                  {selectedQuantities[product.id] || 1}
+                </Text>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => updateQuantity(product.id, 1)}
+                >
+                  <Plus size={16} color="#666" />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={[styles.buyButton, itemLoading[product.id] && styles.buyButtonDisabled]}
+                onPress={() => handleBuyNow(product)}
+                disabled={itemLoading[product.id]}
+              >
+                {itemLoading[product.id] ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.buyButtonText}>Buy Now</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        )}
+        numColumns={2}
+        columnWrapperStyle={styles.productRow}
+        keyExtractor={item => item.id.toString()}
+        contentContainerStyle={styles.productsGrid}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyState}>
+            <ShoppingCart size={48} color="#94a3b8" />
+            <Text style={styles.emptyStateText}>No products available</Text>
+          </View>
+        )}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        <View style={styles.productsGrid}>
-          {filteredProducts.length === 0 ? (
-            <View style={styles.emptyState}>
-              <ShoppingCart size={48} color="#94a3b8" />
-              <Text style={styles.emptyStateText}>No products available</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={filteredProducts}
-              renderItem={({ item: product }) => (
-                <TouchableOpacity
-                  style={styles.productCard}
-                  onPress={() => handleProductPress(product)}
-                >
-                  <View style={styles.imageContainer}>
-                    <Image
-                      source={{
-                        uri: mediaUrl + product.image,
-                        headers: { 'Cache-Control': 'no-cache' },
-                      }}
-                      style={styles.productImage}
-                      resizeMode="cover"
-                    />
-                    {imageLoading[product.id] && (
-                      <View style={styles.imageLoadingOverlay}>
-                        <ActivityIndicator size="large" color="#FF4747" />
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.productInfo}>
-                    <Text style={styles.productName} numberOfLines={2}>
-                      {product.product_name}
-                    </Text>
-                    <Text style={styles.productPrice}>
-                      TSh {(product.price * (selectedQuantities[product.id] || 1)).toLocaleString()}
-                    </Text>
-                    <View style={styles.quantityContainer}>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() => updateQuantity(product.id, -1)}
-                      >
-                        <Minus size={16} color="#666" />
-                      </TouchableOpacity>
-                      <Text style={styles.quantityText}>
-                        {selectedQuantities[product.id] || 1}
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() => updateQuantity(product.id, 1)}
-                      >
-                        <Plus size={16} color="#666" />
-                      </TouchableOpacity>
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.buyButton, itemLoading[product.id] && styles.buyButtonDisabled]}
-                      onPress={() => handleBuyNow(product)}
-                      disabled={itemLoading[product.id]}
-                    >
-                      {itemLoading[product.id] ? (
-                        <ActivityIndicator size="small" color="#ffffff" />
-                      ) : (
-                        <Text style={styles.buyButtonText}>Buy Now</Text>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-              )}
-              numColumns={2}
-              columnWrapperStyle={styles.productRow}
-              keyExtractor={item => item.id.toString()}
-            />
-          )}
-        </View>
-      </ScrollView>
+      />
 
       <ProductDetailsModal
         visible={isModalVisible}
@@ -401,9 +394,6 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     padding: 8,
-  },
-  scrollView: {
-    flex: 1,
   },
   productsGrid: {
     padding: 8,

@@ -207,41 +207,40 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
+      <FlatList
+        ListHeaderComponent={() => (
+          <>
+            {/* Categories */}
+            <FlatList
+              data={categories}
+              renderItem={renderCategoryItem}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoriesList}
+            />
+
+            {/* Banners */}
+            <View style={styles.banner}>
+              <Image
+                source={require('../../assets/images/banner.jpg')}
+                style={styles.bannerImage}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Featured Products</Text>
+            </View>
+          </>
+        )}
+        data={products}
+        renderItem={renderProductItem}
+        numColumns={2}
+        columnWrapperStyle={styles.productRow}
+        keyExtractor={item => item.id.toString()}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        {/* Categories */}
-        <FlatList
-          data={categories}
-          renderItem={renderCategoryItem}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesList}
-        />
-
-        {/* Banners */}
-        <View style={styles.banner}>
-          <Image
-            source={require('../../assets/images/banner.jpg')}
-            style={styles.bannerImage}
-          />
-          
-        </View>
-
-        {/* Featured Products */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Featured Products</Text>
-          <FlatList
-            data={products}
-            renderItem={renderProductItem}
-            numColumns={2}
-            columnWrapperStyle={styles.productRow}
-            keyExtractor={item => item.id.toString()}
-          />
-        </View>
-      </ScrollView>
+      />
 
       {/* Chat FAB */}
       <TouchableOpacity

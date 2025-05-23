@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { Calendar, Clock, Star } from 'lucide-react-native';
-import { Button } from '@/components/ui/Button';
+import { Calendar, Clock, Star, MessageCircle, ShieldCheck } from 'lucide-react-native';
 
 export default function Consultation() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -33,25 +32,26 @@ export default function Consultation() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Book a Consultation</Text>
+        <Text style={styles.title}>Veterinary Consultation</Text>
         <Text style={styles.subtitle}>
-          Connect with experienced veterinarians for expert advice
+          Expert advice for your poultry health needs
         </Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Available Veterinarians</Text>
+        <Text style={styles.sectionTitle}>Top Veterinarians</Text>
         {veterinarians.map((vet) => (
           <Pressable
             key={vet.id}
             style={styles.vetCard}
-            onPress={() => router.push(`/book-consultation/${vet.id}`)}>
+            onPress={() => router.push(`/book-consultation/${vet.id}`)}
+          >
             <Image source={{ uri: vet.image }} style={styles.vetImage} />
             <View style={styles.vetInfo}>
               <View style={styles.vetHeader}>
                 <Text style={styles.vetName}>{vet.name}</Text>
                 <View style={styles.ratingContainer}>
-                  <Star size={16} color="#eab308" fill="#eab308" />
+                  <Star size={16} color="#FF4747" fill="#FF4747" />
                   <Text style={styles.rating}>{vet.rating}</Text>
                 </View>
               </View>
@@ -61,7 +61,7 @@ export default function Consultation() {
                 <Text style={styles.price}>TSH {vet.price}</Text>
                 {vet.available && (
                   <View style={styles.availableTag}>
-                    <Text style={styles.availableText}>Available Today</Text>
+                    <Text style={styles.availableText}>Available Now</Text>
                   </View>
                 )}
               </View>
@@ -72,19 +72,34 @@ export default function Consultation() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>How it works</Text>
-        <View style={styles.stepCard}>
-          <View style={styles.step}>
-            <Calendar size={24} color="#2563eb" />
+        <View style={styles.stepsContainer}>
+          <View style={styles.stepCard}>
+            <View style={styles.stepIconContainer}>
+              <Calendar size={24} color="#FF4747" />
+            </View>
             <Text style={styles.stepTitle}>Book Appointment</Text>
             <Text style={styles.stepDescription}>
-              Choose your preferred vet and schedule a convenient time
+              Schedule a time that works for you
             </Text>
           </View>
-          <View style={styles.step}>
-            <Clock size={24} color="#2563eb" />
-            <Text style={styles.stepTitle}>Get Confirmation</Text>
+
+          <View style={styles.stepCard}>
+            <View style={styles.stepIconContainer}>
+              <MessageCircle size={24} color="#FF4747" />
+            </View>
+            <Text style={styles.stepTitle}>Consult Online</Text>
             <Text style={styles.stepDescription}>
-              Receive instant confirmation and reminder before the consultation
+              Connect with your vet via video call
+            </Text>
+          </View>
+
+          <View style={styles.stepCard}>
+            <View style={styles.stepIconContainer}>
+              <ShieldCheck size={24} color="#FF4747" />
+            </View>
+            <Text style={styles.stepTitle}>Get Care Plan</Text>
+            <Text style={styles.stepDescription}>
+              Receive personalized treatment plan
             </Text>
           </View>
         </View>
@@ -100,43 +115,54 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 24,
-    backgroundColor: '#fff',
+    paddingTop: 60,
+    backgroundColor: '#FF4747',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: '#ffffff',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748b',
-    marginTop: 4,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 8,
   },
   section: {
-    padding: 24,
+    padding: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: '#1f2937',
     marginBottom: 16,
   },
   vetCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   vetImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   vetInfo: {
     flex: 1,
@@ -146,6 +172,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
   vetName: {
     fontSize: 18,
@@ -155,16 +182,21 @@ const styles = StyleSheet.create({
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#fff2f2',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
   rating: {
     marginLeft: 4,
     fontSize: 14,
-    fontWeight: '500',
-    color: '#1f2937',
+    fontWeight: '600',
+    color: '#FF4747',
   },
   specialization: {
     fontSize: 14,
-    color: '#2563eb',
+    color: '#FF4747',
+    fontWeight: '500',
     marginTop: 4,
   },
   experience: {
@@ -176,46 +208,62 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 12,
   },
   price: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1f2937',
   },
   availableTag: {
     backgroundColor: '#dcfce7',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   availableText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#166534',
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  stepsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
   stepCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
+    width: '48%',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
-  step: {
-    marginBottom: 24,
+  stepIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#fff2f2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   stepTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
-    marginTop: 12,
-    marginBottom: 4,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   stepDescription: {
     fontSize: 14,
     color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
