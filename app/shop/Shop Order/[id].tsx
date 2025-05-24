@@ -143,6 +143,13 @@ export default function OrderDetails() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <ArrowLeft size={24} color="#1e293b" />
+        </Pressable>
+        <Text style={styles.headerTitle}>Order Details</Text>
+      </View>
+
       <ScrollView style={styles.content}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -252,34 +259,44 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 24,
     paddingTop: 60,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    backgroundColor: '#FF4747',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   backButton: {
     padding: 8,
     marginRight: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '600',
-    color: '#1e293b',
+    color: '#ffffff',
   },
   content: {
     flex: 1,
+    marginTop: -12,
   },
   section: {
-    backgroundColor: '#fff',
-    marginBottom: 8,
-    padding: 16,
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
@@ -291,37 +308,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 20,
-    gap: 6,
+    gap: 8,
   },
   statusText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   dateText: {
     fontSize: 14,
     color: '#64748b',
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   statusActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 12,
   },
   statusButton: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#f1f5f9',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   statusButtonActive: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#FF4747',
+    borderColor: '#FF4747',
   },
   statusButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#64748b',
   },
   statusButtonTextActive: {
@@ -330,35 +354,39 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
     gap: 12,
   },
   infoText: {
+    flex: 1,
     fontSize: 16,
     color: '#1e293b',
   },
   productCard: {
     flexDirection: 'row',
     backgroundColor: '#f8fafc',
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   productImage: {
-    width: 100,
-    height: 100,
+    width: 120,
+    height: 120,
   },
   productInfo: {
     flex: 1,
-    padding: 12,
+    padding: 16,
   },
   productName: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#1e293b',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   productMeta: {
-    gap: 4,
+    gap: 8,
   },
   metaText: {
     fontSize: 14,
@@ -367,7 +395,10 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
   },
   summaryLabel: {
     fontSize: 16,
@@ -376,22 +407,23 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 16,
     color: '#1e293b',
+    fontWeight: '500',
   },
   totalRow: {
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    paddingTop: 12,
-    marginTop: 12,
+    paddingTop: 16,
+    marginTop: 8,
   },
   totalLabel: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#1e293b',
   },
   totalValue: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2563eb',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FF4747',
   },
   loadingContainer: {
     flex: 1,
@@ -402,22 +434,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 24,
   },
   errorText: {
     fontSize: 16,
-    color: '#ef4444',
+    color: '#FF4747',
     textAlign: 'center',
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: '#FF4747',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
   retryButtonText: {
     color: '#ffffff',
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });

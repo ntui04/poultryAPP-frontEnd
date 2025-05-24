@@ -1,16 +1,12 @@
 import { Stack } from 'expo-router';
 
-export default function ShopLayout() {
+export default function OrderLayout() {
   return (
-    <Stack>
-      <Stack.Screen 
-        name="[id]" 
-        options={{ 
-          title: 'user order',
-          headerShown: false,
-        }} 
-      />
-     
-    </Stack>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: '#f8fafc' },
+      }}
+    />
   );
 }

@@ -138,10 +138,7 @@ export default function Products() {
           })}
           style={styles.addButton}
         >
-          <View style={styles.buttonContent}>
-            <Plus size={20} color="#ffffff" />
-            <Text style={styles.buttonText}>Add</Text>
-          </View>
+          <Text style={styles.buttonText}>Add Product</Text>
         </Button>
       </View>
 
@@ -252,35 +249,43 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 24,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    paddingTop: 60,
+    backgroundColor: '#FF4747',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#0f172a',
-    marginBottom: 4,
+    color: '#ffffff',
+    marginBottom: 8,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   toolbar: {
-    padding: 16,
+    marginTop: -20,
+    marginHorizontal: 16,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
     paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   searchIcon: {
     marginRight: 8,
@@ -292,100 +297,40 @@ const styles = StyleSheet.create({
     color: '#0f172a',
   },
   addButton: {
+    backgroundColor: '#FF4747',
     height: 40,
-    paddingHorizontal: 16,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    paddingHorizontal: 20,
+    borderRadius: 12,
   },
   buttonText: {
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#64748b',
-  },
-  errorText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#ef4444',
-    textAlign: 'center',
-  },
-  emptyText: {
-    marginTop: 16,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#0f172a',
-  },
-  emptySubtext: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#64748b',
-  },
-  retryButton: {
-    marginTop: 16,
+    fontSize: 15,
+    fontWeight: '600',
   },
   productList: {
     padding: 16,
   },
   productCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 16,
     overflow: 'hidden',
-    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   imageContainer: {
     position: 'relative',
     width: '100%',
-    height: 250, // Increased height for better quality
+    height: 200,
     backgroundColor: '#f8fafc',
-    overflow: 'hidden',
   },
   productImage: {
     width: '100%',
     height: '100%',
     backgroundColor: '#f8fafc',
-  },
-  imageLoadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageErrorOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#f8fafc',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageErrorText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#64748b',
   },
   productInfo: {
     padding: 16,
@@ -416,11 +361,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionButton: {
-    padding: 8,
-    borderRadius: 6,
+    padding: 10,
+    borderRadius: 12,
   },
   editButton: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#fff2f2',
   },
   deleteButton: {
     backgroundColor: '#fef2f2',
@@ -435,12 +380,48 @@ const styles = StyleSheet.create({
     borderTopColor: '#f1f5f9',
   },
   productPrice: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0891b2',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FF4747',
   },
   productStock: {
     fontSize: 14,
     color: '#64748b',
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#64748b',
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#FF4747',
+    textAlign: 'center',
+  },
+  emptyText: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  emptySubtext: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#64748b',
+  },
+  retryButton: {
+    marginTop: 16,
+    backgroundColor: '#FF4747',
   },
 });

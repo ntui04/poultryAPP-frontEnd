@@ -130,11 +130,12 @@ export default function Orders() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Orders Management</Text>
+        <Text style={styles.subtitle}>Track and manage your shop orders</Text>
         <View style={styles.searchContainer}>
           <Search size={20} color="#64748b" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search orders..."
+            placeholder="Search orders by customer or product..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#94a3b8"
@@ -167,7 +168,8 @@ export default function Orders() {
             onPress={() => router.push({
               pathname: '/shop/Shop Order/[id]',
               params: { id: order.id }
-            })}>
+            })}
+          >
             <View style={styles.orderHeader}>
               <View>
                 <Text style={styles.orderId}>Order #{order.id}</Text>
@@ -211,27 +213,37 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    padding: 24,
     paddingTop: 60,
+    backgroundColor: '#FF4747',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1e293b',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 16,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
     padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
@@ -239,9 +251,8 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   filterContainer: {
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    marginTop: -12,
+    backgroundColor: 'transparent',
   },
   filterContent: {
     padding: 16,
@@ -252,90 +263,95 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   orderCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   orderId: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#1f2937',
+    marginBottom: 4,
   },
   orderDate: {
     fontSize: 14,
     color: '#64748b',
-    marginTop: 2,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 16,
-    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
   },
   customerInfo: {
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    paddingTop: 12,
-    marginBottom: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
   },
   customerName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#1f2937',
     marginBottom: 4,
   },
   customerDetails: {
     fontSize: 14,
     color: '#64748b',
-    marginBottom: 2,
   },
   productInfo: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   productName: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   quantityText: {
     fontSize: 14,
     color: '#64748b',
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
   },
   orderFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    paddingTop: 12,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 16,
+    marginTop: 8,
   },
   itemCount: {
     fontSize: 14,
     color: '#64748b',
   },
   orderTotal: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2563eb',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FF4747',
   },
   loadingContainer: {
     flex: 1,
@@ -343,25 +359,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    padding: 24,
     alignItems: 'center',
-    padding: 16,
   },
   errorText: {
     fontSize: 16,
-    color: '#ef4444',
+    color: '#FF4747',
     textAlign: 'center',
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: '#FF4747',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
   retryButtonText: {
     color: '#ffffff',
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

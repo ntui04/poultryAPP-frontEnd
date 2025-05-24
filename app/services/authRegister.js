@@ -32,7 +32,7 @@ export const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(
-        'http://192.162.244.32:8000/api/register',
+        'http://192.168.185.32:8000/api/register',
         {
           name,
           number,

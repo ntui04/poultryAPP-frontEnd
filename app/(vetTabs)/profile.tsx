@@ -26,6 +26,7 @@ import {
   ShoppingBag
 } from 'lucide-react-native';
 import AuthService from '../services/authentication';
+import { mediaUrl } from '../services/api'; // Adjust the import path as necessary
 
 const Profile = () => {
   const { user, logout } = useAuthStore();
@@ -157,31 +158,43 @@ const Profile = () => {
     <ScrollView style={styles.container}>
       {/* Profile Header */}
       <View style={styles.header}>
-        <View style={styles.profileImageContainer}>
-          {user?.profileImage ? (
-            <Image 
-              source={{ uri: user.profileImage }} 
-              style={styles.profileImage} 
-            />
-          ) : (
-            <View style={styles.profileInitials}>
-              <Text style={styles.initialsText}>
-                {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
-              </Text>
-            </View>
+        <View style={styles.headerBackground} />
+        <View style={styles.profileContent}>
+          <View style={styles.profileImageContainer}>
+            {user?.profile_image ? (
+              <Image 
+                source={{ uri: `${mediaUrl}${user.profile_image}` }} 
+                style={styles.profileImage}
+              />
+            ) : (
+              <View style={styles.profileInitials}>
+                <Text style={styles.initialsText}>
+                  {user?.firstname ? user.firstname[0].toUpperCase() + (user.lastname ? user.lastname[0].toUpperCase() : '') : 'U'}
+                </Text>
+              </View>
+            )}
+          </View>
+          
+          <Text style={styles.userName}>
+            {user?.firstname ? `${user.firstname} ${user.lastname || ''}` : 'Guest User'}
+          </Text>
+          <Text style={styles.userEmail}>
+            {user?.phone_number || 'No phone number'}
+          </Text>
+          {user?.location && (
+            <Text style={styles.location}>
+              {user.location}
+            </Text>
           )}
+          
+          <Pressable 
+            style={styles.editProfileButton}
+           
+          >
+            <User size={18} color="#FF4747" />
+            <Text style={styles.editProfileText}>Edit Profile</Text>
+          </Pressable>
         </View>
-        
-        <Text style={styles.userName}>{user?.firstname || ''}  {user?.lastname}</Text>
-        <Text style={styles.userEmail}>{user?.phone_number}</Text>
-        <Text style={styles.location}> {user?.location}</Text>
-        
-        <Pressable 
-          style={styles.editProfileButton}
-          onPress={() => router.push('../userprofile/')}
-        >
-          <Text style={styles.editProfileText}>Edit Profile</Text>
-        </Pressable>
       </View>
 
       {/* Profile Options */}
@@ -229,81 +242,114 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   header: {
+    position: 'relative',
+    paddingTop: 60,
+    marginBottom: 24,
+  },
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 390, // Increased height to accommodate edit profile button
+    backgroundColor: '#FF4747',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  profileContent: {
     alignItems: 'center',
-    paddingVertical: 40,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    paddingHorizontal: 24,
+    paddingBottom: 24, // Added padding at bottom
   },
   profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     marginBottom: 16,
-    overflow: 'hidden',
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+    padding: 3, // Creates border effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   profileImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 60,
   },
   profileInitials: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#bfdbfe',
+    borderRadius: 60,
+    backgroundColor: '#fff2f2',
     alignItems: 'center',
     justifyContent: 'center',
   },
   initialsText: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: 'bold',
-    color: '#2563eb',
+    color: '#FF4747',
   },
   userName: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: '#ffffff',
     marginBottom: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   userEmail: {
-    fontSize: 20,
-    color: '#64748b',
-    marginBottom: 16,
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 8,
   },
-  location:{
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4,
+  location: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 20,
   },
   editProfileButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#eff6ff',
-    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    marginTop: 16, // Added margin top
   },
   editProfileText: {
-    color: '#2563eb',
-    fontWeight: '500',
+    color: '#FF4747',
+    fontWeight: '600',
+    fontSize: 14,
   },
   section: {
-    padding: 24,
+    padding: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 16,
+    marginBottom: 12,
+    marginLeft: 4,
   },
   optionsContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   optionItem: {
     flexDirection: 'row',
@@ -317,26 +363,29 @@ const styles = StyleSheet.create({
   optionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   optionText: {
     fontSize: 16,
     color: '#1f2937',
-    marginLeft: 16,
+    fontWeight: '500',
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 24,
-    marginHorizontal: 24,
+    marginHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#fee2e2',
-    borderRadius: 12,
+    backgroundColor: '#fff2f2',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
   },
   logoutText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ef4444',
+    color: '#FF4747',
     marginLeft: 8,
   },
   versionText: {

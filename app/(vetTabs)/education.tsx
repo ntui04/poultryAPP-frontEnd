@@ -78,18 +78,18 @@ export default function Education() {
     >
       <View style={styles.header}>
         <Text style={styles.title}>Learn & Grow</Text>
+        <Text style={styles.subtitle}>Expand your poultry farming knowledge</Text>
         <View style={styles.searchContainer}>
           <Search size={20} color="#64748b" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search courses and articles..."
+            placeholder="Search articles..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#94a3b8"
           />
         </View>
       </View>
-
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Latest Articles</Text>
@@ -144,23 +144,37 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 24,
-    backgroundColor: '#fff',
+    paddingTop: 60,
+    backgroundColor: '#FF4747',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 16,
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 24,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
     padding: 12,
+    marginBottom: -24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
@@ -169,147 +183,113 @@ const styles = StyleSheet.create({
   },
   section: {
     padding: 24,
+    paddingTop: 36,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: '#1f2937',
     marginBottom: 16,
-  },
-  courseCard: {
-    width: 280,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginRight: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  courseImage: {
-    width: '100%',
-    height: 160,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-  },
-  courseInfo: {
-    padding: 16,
-  },
-  courseTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  instructor: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 4,
-  },
-  courseMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  duration: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  durationText: {
-    marginLeft: 4,
-    fontSize: 14,
-    color: '#64748b',
-  },
-  rating: {
-    fontSize: 14,
-    color: '#eab308',
-    fontWeight: '500',
   },
   articleCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
     overflow: 'hidden',
   },
   articleImage: {
-    width: 120,
-    height: 140,
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
+    width: 130,
+    height: 160,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
   },
   articleInfo: {
     flex: 1,
     padding: 16,
+    justifyContent: 'space-between',
   },
   categoryContainer: {
     marginBottom: 8,
   },
   category: {
-    backgroundColor: '#eff6ff',
-    color: '#2563eb',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    fontSize: 12,
-    fontWeight: '500',
+    backgroundColor: '#fff2f2',
+    color: '#FF4747',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    fontSize: 14,
+    fontWeight: '600',
     alignSelf: 'flex-start',
   },
   articleTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1f2937',
     marginBottom: 8,
+    lineHeight: 22,
   },
   articleAuthor: {
     fontSize: 14,
     color: '#64748b',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   articleMeta: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    padding: 8,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
   readTime: {
-    marginLeft: 4,
+    marginLeft: 6,
     fontSize: 14,
     color: '#64748b',
+    fontWeight: '500',
   },
   loadingContainer: {
     padding: 40,
     alignItems: 'center',
   },
   errorContainer: {
+    backgroundColor: '#fef2f2',
     padding: 20,
+    borderRadius: 12,
     alignItems: 'center',
+    margin: 16,
   },
   errorText: {
-    color: '#ef4444',
+    color: '#dc2626',
     marginBottom: 12,
     textAlign: 'center',
+    fontSize: 15,
   },
   retryButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#FF4747',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   retryButtonText: {
     color: '#ffffff',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   emptyContainer: {
     padding: 40,
     alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    margin: 16,
   },
   emptyText: {
     color: '#64748b',
     fontSize: 16,
-  },
+    fontWeight: '500',
+  }
 });
