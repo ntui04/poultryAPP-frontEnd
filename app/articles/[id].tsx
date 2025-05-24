@@ -106,20 +106,29 @@ export default function ArticleScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#1e293b" />
+        <Pressable 
+          onPress={() => router.back()} 
+          style={styles.headerButton}
+        >
+          <ArrowLeft size={24} color="#ffffff" />
         </Pressable>
-        <Pressable onPress={handleShare} style={styles.shareButton}>
-          <Share2 size={24} color="#1e293b" />
+        <Pressable 
+          onPress={handleShare} 
+          style={styles.headerButton}
+        >
+          <Share2 size={24} color="#ffffff" />
         </Pressable>
       </View>
 
-      <ScrollView style={styles.content}>
-        <Image
-          source={{ uri: mediaUrl + article.image_url }}
-          style={styles.coverImage}
-          resizeMode="cover"
-        />
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: mediaUrl + article.image_url }}
+            style={styles.coverImage}
+            resizeMode="cover"
+          />
+          <View style={styles.imageOverlay} />
+        </View>
 
         <View style={styles.articleContent}>
           <View style={styles.categoryContainer}>
@@ -146,7 +155,7 @@ export default function ArticleScreen() {
             </View>
           </View>
 
-          <Text style={styles.content}>{article.content}</Text>
+          <Text style={styles.articleText}>{article.content}</Text>
         </View>
       </ScrollView>
 
@@ -159,6 +168,7 @@ export default function ArticleScreen() {
             size={24}
             color={isLiked ? '#FF4747' : '#64748b'}
             fill={isLiked ? '#FF4747' : 'none'}
+            strokeWidth={2}
           />
           <Text style={[styles.actionText, isLiked && styles.actionTextActive]}>
             {isLiked ? 'Liked' : 'Like'}
@@ -166,7 +176,7 @@ export default function ArticleScreen() {
         </Pressable>
         
         <Pressable style={styles.actionButton} onPress={handleShare}>
-          <Share2 size={24} color="#64748b" />
+          <Share2 size={24} color="#64748b" strokeWidth={2} />
           <Text style={styles.actionText}>Share</Text>
         </Pressable>
       </View>
@@ -183,33 +193,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: 24,
     paddingTop: 60,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    backgroundColor: '#FF4747',
+    zIndex: 10,
   },
-  backButton: {
-    padding: 8,
+  headerButton: {
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
   },
-  shareButton: {
-    padding: 8,
+  imageContainer: {
+    width: width,
+    height: width * 0.8,
+    marginTop: -80,
+  },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    zIndex: 1,
   },
   coverImage: {
-    width: width,
-    height: width * 0.75,
-    backgroundColor: '#f8fafc',
+    width: '100%',
+    height: '100%',
   },
   articleContent: {
-    padding: 20,
+    padding: 24,
+    marginTop: -40,
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    zIndex: 2,
   },
   categoryContainer: {
     backgroundColor: '#fff2f2',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
     alignSelf: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   category: {
     color: '#FF4747',
@@ -217,17 +239,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '800',
     color: '#1e293b',
-    marginBottom: 20,
-    lineHeight: 36,
+    marginBottom: 24,
+    lineHeight: 40,
   },
   authorSection: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
-    paddingBottom: 20,
+    paddingBottom: 24,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
@@ -236,13 +258,20 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     marginRight: 16,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   authorInfo: {
     flex: 1,
   },
   authorName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1e293b',
     marginBottom: 6,
   },
@@ -253,6 +282,7 @@ const styles = StyleSheet.create({
   timeAgo: {
     fontSize: 14,
     color: '#64748b',
+    fontWeight: '500',
   },
   dot: {
     fontSize: 14,
@@ -263,26 +293,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8fafc',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 6,
   },
   readTime: {
     fontSize: 14,
     color: '#64748b',
-    marginLeft: 6,
+    fontWeight: '500',
   },
-  content: {
-    fontSize: 16,
+  articleText: {
+    fontSize: 17,
     lineHeight: 28,
     color: '#334155',
+    letterSpacing: 0.3,
   },
   footer: {
     flexDirection: 'row',
     padding: 16,
+    paddingBottom: 32,
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    backgroundColor: '#ffffff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
@@ -294,16 +327,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    marginHorizontal: 4,
-    borderRadius: 12,
+    paddingVertical: 14,
+    marginHorizontal: 6,
+    borderRadius: 14,
+    backgroundColor: '#f8fafc',
   },
   actionButtonActive: {
     backgroundColor: '#fff2f2',
   },
   actionText: {
     marginLeft: 8,
-    fontSize: 15,
+    fontSize: 16,
     color: '#64748b',
     fontWeight: '600',
   },

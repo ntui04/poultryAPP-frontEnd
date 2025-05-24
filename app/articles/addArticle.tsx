@@ -85,7 +85,7 @@ export default function AddPost() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#1f2937" />
+          <ArrowLeft size={24} color="#ffffff" />
         </Pressable>
         <Text style={styles.headerTitle}>Create New Post</Text>
       </View>
@@ -93,17 +93,22 @@ export default function AddPost() {
       <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
         <View style={styles.imagePreview}>
           {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.previewImage} />
+            <>
+              <Image source={{ uri: imageUri }} style={styles.previewImage} />
+              <View style={styles.imageOverlay}>
+                <Pressable style={styles.changeImageButton} onPress={pickImage}>
+                  <Upload size={20} color="#ffffff" />
+                  <Text style={styles.changeImageText}>Change Image</Text>
+                </Pressable>
+              </View>
+            </>
           ) : (
-            <View style={styles.imagePlaceholder}>
+            <Pressable style={styles.uploadArea} onPress={pickImage}>
               <ImageIcon size={48} color="#94a3b8" />
-              <Text style={styles.imagePlaceholderText}>No image selected</Text>
-            </View>
+              <Text style={styles.uploadText}>Upload Cover Image</Text>
+              <Text style={styles.uploadHint}>Click to browse files</Text>
+            </Pressable>
           )}
-          <Pressable style={styles.uploadButton} onPress={pickImage}>
-            <Upload size={20} color="#2563eb" />
-            <Text style={styles.uploadButtonText}>Upload Image</Text>
-          </Pressable>
         </View>
 
         <View style={styles.inputGroup}>
@@ -159,9 +164,9 @@ export default function AddPost() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color="#ffffff" size="small" />
           ) : (
-            <Text style={styles.submitButtonText}>Create Post</Text>
+            <Text style={styles.submitButtonText}>Publish Article</Text>
           )}
         </Pressable>
       </ScrollView>
@@ -175,100 +180,132 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   header: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FF4747',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    padding: 24,
+    paddingTop: 60,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   backButton: {
     padding: 8,
-    marginRight: 8,
+    marginRight: 12,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1f2937',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   form: {
-    padding: 16,
+    padding: 24,
   },
   imagePreview: {
+    position: 'relative',
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+    borderRadius: 16,
     marginBottom: 24,
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    borderStyle: 'dashed',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   previewImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
+    height: 240,
+    borderRadius: 16,
   },
-  imagePlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  imagePlaceholderText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#94a3b8',
-  },
-  uploadButton: {
+  changeImageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginTop: 16,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    gap: 8,
   },
-  uploadButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#2563eb',
-    fontWeight: '500',
+  changeImageText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  uploadArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    borderStyle: 'dashed',
+    borderRadius: 16,
+  },
+  uploadText: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  uploadHint: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#94a3b8',
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   label: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   input: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
     color: '#1f2937',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   contentInput: {
-    height: 150,
+    height: 200,
+    textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 16,
-    borderRadius: 8,
+    backgroundColor: '#FF4747',
+    paddingVertical: 18,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 32,
+    marginTop: 32,
+    marginBottom: 40,
+    shadowColor: '#FF4747',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   submitButtonDisabled: {
     opacity: 0.7,
   },
   submitButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
   },
 });

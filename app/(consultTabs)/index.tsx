@@ -34,9 +34,6 @@ export default function ConsultantsHome() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // const mediaUrl = 'http://192.168.82.32:8000/storage/';
-
-
   const fetchConsultants = async () => {
     try {
       setError(null);
@@ -83,22 +80,12 @@ export default function ConsultantsHome() {
     );
   }
 
-  console.log(consultants)
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <Text style={styles.pageTitle}>Veterinary Consultants</Text>
-          <Pressable 
-            style={styles.addConsultantButton}
-            onPress={() => router.push('/consultants/add')}
-          >
-            <PlusCircle size={24} color="#2563eb" />
-            <Text style={styles.addConsultantText}>Add Consultant</Text>
-          </Pressable>
-        </View>
-
+        <Text style={styles.title}>Find a Vet</Text>
+        <Text style={styles.subtitle}>Connect with experienced veterinarians</Text>
+        
         <View style={styles.searchContainer}>
           <Search size={20} color="#64748b" style={styles.searchIcon} />
           <TextInput
@@ -127,15 +114,17 @@ export default function ConsultantsHome() {
               key={consultant.id}
               style={styles.consultantCard}
               onPress={() => router.push(`/userprofile/consultants/profile/${consultant.id}`)}
-
             >
               <View style={styles.cardHeader}>
-                <Image source={{ uri:mediaUrl + consultant.image }} style={styles.consultantImage} />
+                <Image 
+                  source={{ uri: mediaUrl + consultant.image }} 
+                  style={styles.consultantImage} 
+                />
                 <View style={styles.headerInfo}>
                   <Text style={styles.consultantName}>{consultant.name}</Text>
                   <Text style={styles.specialization}>{consultant.specialization}</Text>
                   <View style={styles.ratingContainer}>
-                    <Star size={16} color="#eab308" fill="#eab308" />
+                    <Star size={16} color="#FF4747" fill="#FF4747" />
                     <Text style={styles.rating}>{consultant.rating}</Text>
                     <Text style={styles.reviews}>({consultant.reviews} reviews)</Text>
                   </View>
@@ -159,11 +148,8 @@ export default function ConsultantsHome() {
                     <Clock size={16} color="#64748b" />
                     <Text style={styles.nextAvailable}>Next available: {consultant.nextAvailable}</Text>
                   </View>
-                  <Pressable
-                    style={styles.viewProfileButton}
-                    onPress={() => router.push(`/consultants/profile/${consultant.id}`)}
-                  >
-                    <Text style={styles.viewProfileButtonText}>View Profile</Text>
+                  <Pressable style={styles.bookButton}>
+                    <Text style={styles.bookButtonText}>Book Now</Text>
                   </Pressable>
                 </View>
               </View>
@@ -175,49 +161,44 @@ export default function ConsultantsHome() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
   },
   header: {
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    paddingBottom: 16,
+    padding: 24,
+    paddingTop: 60,
+    backgroundColor: '#FF4747',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 8,
   },
-  pageTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1f2937',
-  },
-  addConsultantButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  addConsultantText: {
-    color: '#2563eb',
+  subtitle: {
     fontSize: 16,
-    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 24,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
     padding: 12,
-    marginHorizontal: 16,
+    marginBottom: -24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
@@ -225,27 +206,28 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   consultantList: {
-    padding: 16,
+    padding: 24,
+    paddingTop: 36,
   },
   consultantCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     marginBottom: 16,
-    padding: 16,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardHeader: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   consultantImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     marginRight: 16,
   },
   headerInfo: {
@@ -253,23 +235,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   consultantName: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#1f2937',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   specialization: {
-    fontSize: 14,
-    color: '#2563eb',
-    marginBottom: 4,
+    fontSize: 15,
+    color: '#FF4747',
+    marginBottom: 8,
+    fontWeight: '500',
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   rating: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1f2937',
   },
@@ -279,25 +262,28 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    paddingTop: 16,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 20,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 20,
+    backgroundColor: '#f8fafc',
+    padding: 16,
+    borderRadius: 12,
   },
   infoItem: {
     flex: 1,
   },
   infoLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#64748b',
     marginBottom: 4,
   },
   infoValue: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#1f2937',
   },
   availabilityContainer: {
@@ -308,23 +294,30 @@ const styles = StyleSheet.create({
   availabilityInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+    backgroundColor: '#f8fafc',
+    padding: 8,
+    borderRadius: 8,
   },
   nextAvailable: {
     fontSize: 14,
     color: '#64748b',
+    fontWeight: '500',
   },
-  viewProfileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+  bookButton: {
+    backgroundColor: '#FF4747',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    shadowColor: '#FF4747',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  viewProfileButtonText: {
+  bookButtonText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   loadingContainer: {

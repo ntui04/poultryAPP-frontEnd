@@ -130,13 +130,13 @@ export default function ManagePosts() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.pageTitle}>Manage Posts</Text>
+          <Text style={styles.pageTitle}>My Articles</Text>
           <Pressable 
             style={styles.addPostButton}
             onPress={() => router.push('/articles/addArticle')}
           >
-            <PlusCircle size={24} color="#2563eb" />
-            <Text style={styles.addPostText}>Add Post</Text>
+            <PlusCircle size={24} color="#ffffff" />
+            <Text style={styles.addPostText}>New Article</Text>
           </Pressable>
         </View>
 
@@ -144,7 +144,7 @@ export default function ManagePosts() {
           <Search size={20} color="#64748b" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search posts..."
+            placeholder="Search your articles..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#94a3b8"
@@ -229,49 +229,54 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   header: {
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    paddingBottom: 16,
+    backgroundColor: '#FF4747',
+    paddingTop: 60,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   headerContent: {
-    paddingTop: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 24,
+    marginBottom: 20,
   },
   pageTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1f2937',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#ffffff',
   },
   addPostButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    marginLeft: 10,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
-
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
   },
   addPostText: {
-    color: '#2563eb',
-    fontSize: 16,
+    color: '#ffffff',
+    fontSize: 15,
     fontWeight: '600',
-    marginLeft: 10,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    marginHorizontal: 24,
+    borderRadius: 12,
     padding: 12,
-    marginHorizontal: 16,
+    marginBottom: -24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
@@ -279,59 +284,64 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   postList: {
-    padding: 16,
+    paddingTop: 36,
   },
   postListContent: {
-    paddingBottom: 16,
+    padding: 24,
   },
   postCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   postInfo: {
     flex: 1,
     marginRight: 16,
   },
   postTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1f2937',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   postDetails: {
     fontSize: 14,
     color: '#64748b',
-    marginBottom: 4,
+    marginBottom: 12,
   },
   category: {
-    fontSize: 14,
-    color: '#2563eb',
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    fontSize: 13,
+    color: '#FF4747',
+    backgroundColor: '#fff2f2',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     alignSelf: 'flex-start',
+    fontWeight: '600',
   },
   actionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
   editButton: {
-    padding: 8,
+    padding: 10,
+    backgroundColor: '#f0f9ff',
+    borderRadius: 12,
   },
   deleteButton: {
-    padding: 8,
+    padding: 10,
+    backgroundColor: '#fef2f2',
+    borderRadius: 12,
   },
   modalOverlay: {
     flex: 1,
@@ -340,14 +350,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
     padding: 24,
     width: '85%',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 8,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '700',
     marginBottom: 16,
     color: '#1f2937',
@@ -357,30 +372,36 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
     color: '#64748b',
+    lineHeight: 24,
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 16,
+    width: '100%',
   },
   modalCancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
   },
   modalCancelText: {
     color: '#1f2937',
+    fontSize: 16,
     fontWeight: '600',
   },
   modalDeleteButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#ef4444',
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: '#FF4747',
+    alignItems: 'center',
   },
   modalDeleteText: {
-    color: '#fff',
+    color: '#ffffff',
+    fontSize: 16,
     fontWeight: '600',
-  },
+  }
 });

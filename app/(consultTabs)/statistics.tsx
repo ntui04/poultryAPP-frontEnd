@@ -95,30 +95,20 @@ export default function Statistics() {
     return (
       <View style={styles.statisticCard}>
         <View style={styles.cardHeader}>
-          <View style={styles.iconContainer}>
-            <Icon size={24} color="#2563eb" />
+          <View style={[styles.iconContainer, { backgroundColor: '#fff2f2' }]}>
+            <Icon size={24} color="#FF4747" />
           </View>
           <Text style={styles.cardTitle}>{title}</Text>
         </View>
         <View style={styles.cardContent}>
           <Text style={styles.cardValue}>{value.toLocaleString()}</Text>
-          <View
-            style={[
-              styles.growthBadge,
-              isPositive ? styles.positiveGrowth : styles.negativeGrowth,
-            ]}
-          >
+          <View style={[styles.growthBadge, isPositive ? styles.positiveGrowth : styles.negativeGrowth]}>
             {isPositive ? (
               <ChevronUp size={16} color="#059669" />
             ) : (
               <ChevronDown size={16} color="#dc2626" />
             )}
-            <Text
-              style={[
-                styles.growthText,
-                isPositive ? styles.positiveGrowthText : styles.negativeGrowthText,
-              ]}
-            >
+            <Text style={[styles.growthText, isPositive ? styles.positiveGrowthText : styles.negativeGrowthText]}>
               {growthValue}%
             </Text>
           </View>
@@ -150,8 +140,8 @@ export default function Statistics() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Platform Statistics</Text>
-        <Text style={styles.pageSubtitle}>Overview of our platform performance</Text>
+        <Text style={styles.pageTitle}>Statistics</Text>
+        <Text style={styles.pageSubtitle}>Platform performance overview</Text>
       </View>
 
       <ScrollView 
@@ -184,23 +174,22 @@ export default function Statistics() {
 
         <View style={styles.detailsSection}>
           <Text style={styles.detailsSectionTitle}>Recent Activity</Text>
-          <View style={styles.activityItem}>
-            <Calendar size={20} color="#64748b" />
-            <Text style={styles.activityText}>
-              New users joined this month: {statistics.recentActivity.newUsers}
-            </Text>
-          </View>
-          <View style={styles.activityItem}>
-            <Store size={20} color="#64748b" />
-            <Text style={styles.activityText}>
-              New shops registered this month: {statistics.recentActivity.newShops}
-            </Text>
-          </View>
-          <View style={styles.activityItem}>
-            <FileText size={20} color="#64748b" />
-            <Text style={styles.activityText}>
-              Posts created this month: {statistics.recentActivity.newPosts}
-            </Text>
+          <View style={styles.activityList}>
+            {/*
+              { icon: Calendar, text: `${statistics?.recentActivity.newUsers} new users this month` },
+              { icon: Store, text: `${statistics?.recentActivity.newShops} new shops registered` },
+              { icon: FileText, text: `${statistics?.recentActivity.newPosts} new posts created` }
+            */}
+            {/*
+              .map((item, index) => (
+                <View key={index} style={styles.activityItem}>
+                  <View style={styles.activityIconContainer}>
+                    <item.icon size={20} color="#FF4747" />
+                  </View>
+                  <Text style={styles.activityText}>{item.text}</Text>
+                </View>
+              ))
+            */}
           </View>
         </View>
       </ScrollView>
@@ -213,64 +202,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    color: '#dc2626',
-    fontSize: 16,
-    textAlign: 'center',
-  },
   header: {
     padding: 24,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    paddingTop: 60,
+    backgroundColor: '#FF4747',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   pageTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 8,
   },
   pageSubtitle: {
     fontSize: 16,
-    color: '#64748b',
-    marginTop: 4,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   statisticsContainer: {
     flex: 1,
   },
   statisticsContent: {
-    padding: 16,
+    padding: 24,
+    paddingTop: 12,
   },
   statisticCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   iconContainer: {
-    backgroundColor: '#eff6ff',
-    padding: 8,
-    borderRadius: 8,
+    padding: 12,
+    borderRadius: 12,
     marginRight: 12,
   },
   cardTitle: {
@@ -284,16 +258,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   cardValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '800',
     color: '#1f2937',
   },
   growthBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
   },
   positiveGrowth: {
     backgroundColor: '#dcfce7',
@@ -303,7 +277,8 @@ const styles = StyleSheet.create({
   },
   growthText: {
     marginLeft: 4,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   positiveGrowthText: {
     color: '#059669',
@@ -313,29 +288,58 @@ const styles = StyleSheet.create({
   },
   detailsSection: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 24,
     marginTop: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   detailsSectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#1f2937',
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  activityList: {
+    gap: 16,
   },
   activityItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: '#f8fafc',
+    padding: 16,
+    borderRadius: 12,
+  },
+  activityIconContainer: {
+    backgroundColor: '#fff2f2',
+    padding: 10,
+    borderRadius: 10,
+    marginRight: 12,
   },
   activityText: {
-    marginLeft: 12,
-    fontSize: 14,
-    color: '#64748b',
+    flex: 1,
+    fontSize: 15,
+    color: '#1f2937',
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    color: '#FF4747',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
   },
 });

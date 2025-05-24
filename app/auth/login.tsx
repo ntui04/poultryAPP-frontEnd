@@ -121,25 +121,29 @@ export default function LoginScreen() {
             source={headerImageSource}
             style={styles.headerImage}
             resizeMode="cover"
-            onError={() => console.log('Failed to load header image')}
-            accessibilityIgnoresInvertColors
           />
           <View style={styles.overlay} />
           <View style={styles.headerContent}>
-            <Text style={styles.title} accessibilityRole="header">Welcome Back</Text>
+            <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to continue to AgroApp</Text>
           </View>
         </View>
 
         {/* Form Section */}
         <View style={styles.formContainer}>
+          <View style={styles.formHeader}>
+            <Text style={styles.formTitle}>Sign In</Text>
+            <Text style={styles.formSubtitle}>Enter your credentials to continue</Text>
+          </View>
+
           {/* Phone Number Input */}
           <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Phone Number</Text>
             <View style={[styles.inputWrapper, errors.phone_number && styles.inputWrapperError]}>
               <Phone size={20} color="#64748b" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Phone Number"
+                placeholder="Enter your phone number"
                 placeholderTextColor="#94a3b8"
                 keyboardType="phone-pad"
                 autoComplete="tel"
@@ -156,19 +160,18 @@ export default function LoginScreen() {
               />
             </View>
             {errors.phone_number && (
-              <Text style={styles.errorText} accessibilityLiveRegion="assertive">
-                {errors.phone_number}
-              </Text>
+              <Text style={styles.errorText}>{errors.phone_number}</Text>
             )}
           </View>
 
           {/* Password Input */}
           <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Password</Text>
             <View style={[styles.inputWrapper, errors.password && styles.inputWrapperError]}>
               <Lock size={20} color="#64748b" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder="Enter your password"
                 placeholderTextColor="#94a3b8"
                 secureTextEntry={!showPassword}
                 autoComplete="password"
@@ -195,23 +198,18 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
             {errors.password && (
-              <Text style={styles.errorText} accessibilityLiveRegion="assertive">
-                {errors.password}
-              </Text>
+              <Text style={styles.errorText}>{errors.password}</Text>
             )}
           </View>
 
-          {/* Forgot Password Link */}
           <Pressable
-            style={({ pressed }) => [styles.forgotPasswordLink, pressed && styles.pressed]}
+            style={styles.forgotPasswordLink}
             onPress={() => router.push('/auth/RequestResetScreen')}
-            accessibilityRole="link"
           >
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            <ChevronRight size={16} color="#2563eb" />
+            <ChevronRight size={16} color="#FF4747" />
           </Pressable>
 
-          {/* Login Button */}
           <Pressable
             style={({ pressed }) => [
               styles.loginButton, 
@@ -220,7 +218,6 @@ export default function LoginScreen() {
             ]}
             onPress={handleLogin}
             disabled={isLoading}
-            accessibilityRole="button"
           >
             {isLoading ? (
               <ActivityIndicator color="#fff" />
@@ -232,27 +229,19 @@ export default function LoginScreen() {
             )}
           </Pressable>
 
-          {/* Register Link */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
           <View style={styles.registerContainer}>
             <Text style={styles.registerText}>Don't have an account?</Text>
             <Pressable
               onPress={() => router.push('/auth/register')}
-              style={({ pressed }) => [styles.registerButton, pressed && styles.pressed]}
-              accessibilityRole="link"
+              style={styles.registerButton}
             >
               <Text style={styles.registerButtonText}>Create Account</Text>
-            </Pressable>
-          </View>
-
-          {/* Privacy Policy Link */}
-          <View style={styles.legalContainer}>
-            <Text style={styles.legalText}>By continuing, you agree to our </Text>
-            <Pressable onPress={() => router.push('/')}>
-              <Text style={styles.legalLink}>Terms of Service</Text>
-            </Pressable>
-            <Text style={styles.legalText}> and </Text>
-            <Pressable onPress={() => router.push('/')}>
-              <Text style={styles.legalLink}>Privacy Policy</Text>
             </Pressable>
           </View>
         </View>
@@ -270,7 +259,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    height: 260,
+    height: 280,
     position: 'relative',
   },
   headerImage: {
@@ -280,7 +269,8 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundImage: 'linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.8))',
   },
   headerContent: {
     flex: 1,
@@ -288,38 +278,57 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#fff',
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#ffffff',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#e2e8f0',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   formContainer: {
     padding: 24,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -24,
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -32,
+  },
+  formHeader: {
+    marginBottom: 32,
+  },
+  formTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  formSubtitle: {
+    fontSize: 15,
+    color: '#64748b',
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8fafc',
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
     paddingHorizontal: 16,
     height: 56,
   },
   inputWrapperError: {
-    borderColor: '#ef4444',
-    backgroundColor: '#fef2f2',
+    borderColor: '#FF4747',
+    backgroundColor: '#fff5f5',
   },
   inputIcon: {
     marginRight: 12,
@@ -327,101 +336,90 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#0f172a',
-    paddingVertical: 16,
+    color: '#1f2937',
   },
   eyeIcon: {
     padding: 8,
-    marginLeft: 8,
   },
   errorText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
+    color: '#FF4747',
+    fontSize: 13,
+    marginTop: 6,
     marginLeft: 4,
   },
   forgotPasswordLink: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-end',
-    marginBottom: 24,
-    padding: 4,
+    marginBottom: 32,
   },
   forgotPasswordText: {
-    color: '#2563eb',
+    color: '#FF4747',
     fontSize: 14,
+    fontWeight: '600',
     marginRight: 4,
   },
   loginButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 12,
+    backgroundColor: '#FF4747',
+    borderRadius: 14,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#2563eb',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
+    shadowColor: '#FF4747',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   loginButtonDisabled: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: '#fca5a5',
     shadowOpacity: 0,
     elevation: 0,
   },
   loginButtonPressed: {
     transform: [{ scale: 0.98 }],
-    opacity: 0.9,
   },
   loginButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   loginButtonText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-    marginRight: 8,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 32,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e2e8f0',
+  },
+  dividerText: {
+    color: '#64748b',
+    paddingHorizontal: 16,
+    fontSize: 14,
   },
   registerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    gap: 8,
   },
   registerText: {
     color: '#64748b',
-    fontSize: 14,
+    fontSize: 15,
   },
   registerButton: {
-    marginLeft: 8,
     padding: 4,
   },
   registerButtonText: {
-    color: '#2563eb',
-    fontSize: 14,
+    color: '#FF4747',
+    fontSize: 15,
     fontWeight: '600',
-  },
-  legalContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: 16,
-  },
-  legalText: {
-    color: '#64748b',
-    fontSize: 12,
-  },
-  legalLink: {
-    color: '#2563eb',
-    fontSize: 12,
-    textDecorationLine: 'underline',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
+  }
 });
