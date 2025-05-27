@@ -175,19 +175,20 @@ export default function ShopProfile() {
         'Confirm Purchase',
         `Would you like to buy ${quantity} ${
           quantity === 1 ? 'unit' : 'units'
-        } of ${product.product_name} for $${totalPrice}?`,
+        } of ${product.product_name} for TSh${totalPrice.toLocaleString()}?`,
         [
           {
             text: 'Cancel',
             style: 'cancel',
           },
           {
-            text: 'Buy Now',
+            text: 'Continue',
             onPress: async () => {
               try {
                 setItemLoading((prev) => ({ ...prev, [product.id]: true }));
 
-                await productsApi.purchase({
+                // Step 1: Create purchase order
+                const purchaseResponse = await productsApi.purchase({
                   product_id: product.id,
                   quantity: quantity,
                   total_price: totalPrice,
@@ -200,22 +201,50 @@ export default function ShopProfile() {
                   },
                 });
 
-                Alert.alert(
-                  'Success',
-                  `Successfully purchased ${quantity} ${
-                    quantity === 1 ? 'unit' : 'units'
-                  } of ${product.product_name}!`
-                );
+                console.log('Purchase created:', purchaseResponse.data); // Add this for debugging
 
-                setSelectedQuantities((prev) => ({
-                  ...prev,
-                  [product.id]: 1,
-                }));
+                if (!purchaseResponse.data.id) {
+                  throw new Error('Purchase ID not received from server');
+                }
+
+                // Step 2: Initiate payment using the purchase ID
+                const paymentResponse = await apiz.post('/payments/initiate', {
+                  purchase_id: purchaseResponse.data.id,
+                  phone_number: purchaseResponse.data.user.phone_number, // The backend will have this, but including for completeness
+                });
+
+                console.log('Payment response:', paymentResponse.data); // Add this for debugging
+
+                if (paymentResponse.data.status === 'success') {
+                  Alert.alert(
+                    'Payment Initiated',
+                    'Please check your phone for the M-PESA prompt and enter your PIN to complete payment.',
+                    [
+                      {
+                        text: 'OK',
+                        onPress: () => {
+                          // Reset quantity after successful initiation
+                          setSelectedQuantities((prev) => ({
+                            ...prev,
+                            [product.id]: 1,
+                          }));
+                          // Check payment status with the reference from response
+                          if (paymentResponse.data.data?.reference) {
+                            checkPaymentStatus(paymentResponse.data.data.reference);
+                          }
+                        },
+                      },
+                    ]
+                  );
+                } else {
+                  throw new Error(paymentResponse.data.message || 'Payment initiation failed');
+                }
               } catch (error) {
-                console.error('Purchase error:', error);
+                console.error('Purchase/Payment error:', error);
                 Alert.alert(
                   'Error',
                   error.response?.data?.message ||
+                    error.message ||
                     'Failed to process purchase. Please try again.'
                 );
               } finally {
@@ -226,7 +255,27 @@ export default function ShopProfile() {
         ]
       );
     } catch (error) {
+      console.error('Purchase error:', error);
       Alert.alert('Error', 'Failed to process purchase. Please try again.');
+    }
+  };
+
+  // Add a function to check payment status
+  const checkPaymentStatus = async (reference) => {
+    try {
+      const response = await apiz.get(`/payments/status/${reference}`);
+      
+      if (response.data.status === 'completed') {
+        Alert.alert('Success', 'Payment completed successfully!');
+        fetchShopData(); // Refresh products list
+      } else if (response.data.status === 'pending') {
+        // Optionally show pending status
+        setTimeout(() => checkPaymentStatus(reference), 5000); // Check again in 5 seconds
+      } else {
+        Alert.alert('Payment Failed', 'Please try again or contact support.');
+      }
+    } catch (error) {
+      console.error('Payment status check failed:', error);
     }
   };
 
