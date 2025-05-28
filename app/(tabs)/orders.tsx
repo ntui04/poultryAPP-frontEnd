@@ -15,12 +15,12 @@ import { Package2, Calendar, DollarSign, Store, Check, ArrowLeft } from 'lucide-
 import { router } from 'expo-router';
 import apiz from '../services/api';
 import { mediaUrl } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Shop {
-  id: number;
+  id: number | null;
   name: string;
   lastname: string;
-  image_url: string;
 }
 
 interface Product {
@@ -31,47 +31,81 @@ interface Product {
   shop: Shop;
 }
 
+// First, update the Purchase interface to allow for all possible status values
 interface Purchase {
   id: number;
   quantity: number;
   total_price: number;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: 'pending' | 'completed' | 'cancelled' | 'delivered'; // Added 'delivered'
+  status_text: string;
+  status_color: string;
+  payment_status: string;
+  payment_reference: string;
   created_at: string;
   product: Product;
 }
 
+interface OrdersResponse {
+  cancelled: Purchase[];
+  completed: Purchase[];
+  pending: Purchase[];
+  processing?: Purchase[];
+  delivered?: Purchase[];
+}
+
 export default function Orders() {
-  const [orders, setOrders] = useState<Purchase[]>([]);
+  const [orders, setOrders] = useState<Purchase[]>([]); // Initialize as empty array
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const updateOrderStatus = async (orderId: number, newStatus: 'completed') => {
-    try {
-      await apiz.patch(`/purchases/${orderId}/status`, { status: newStatus });
-      // Update local state
-      setOrders(orders.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      ));
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update order status');
-    }
-  };
+  const [userPhone, setUserPhone] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     try {
       setError(null);
       const response = await apiz.get('/purchases');
-      setOrders(response.data);
+      
+      if (response.data) {
+        // Combine all orders from all status arrays
+        const allOrders = Object.values(response.data)
+          .filter(Array.isArray)
+          .flat() as Purchase[];
+
+        if (allOrders.length > 0) {
+          // Sort by created_at date, most recent first
+          allOrders.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+          setOrders(allOrders);
+          console.log('Total orders loaded:', allOrders.length); // Debug log
+        } else {
+          setOrders([]);
+        }
+      }
     } catch (err: any) {
+      console.error('Fetch error:', err);
       setError(err.response?.data?.message || 'Failed to fetch orders');
+      setOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const getUserPhone = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserPhone(user.phone_number);
+      }
+    } catch (error) {
+      console.error('Error getting user phone:', error);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
+    getUserPhone();
   }, []);
 
   const onRefresh = async () => {
@@ -94,6 +128,114 @@ export default function Orders() {
       pathname: '/shop/profile-shop/[id]',
       params: { id: shopId },
     });
+  };
+
+  const getStatusStyle = (status: string, color: string) => ({
+    color: color,
+    backgroundColor: `${color}15`,
+  });
+
+  // Then update the updateOrderStatus function
+  const updateOrderStatus = async (orderId: number, newStatus: Purchase['status']) => {
+    try {
+      const response = await apiz.put(`/purchases/${orderId}/status`, {
+        status: newStatus
+      });
+
+      if (response.data) {
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === orderId 
+              ? {
+                  ...order,
+                  status: newStatus,
+                  status_text: getStatusText(newStatus)
+                } as Purchase
+              : order
+          )
+        );
+        Alert.alert('Success', 'Order status updated successfully');
+      }
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      Alert.alert('Error', 'Failed to update order status');
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'Order Completed';
+      case 'delivered':
+        return 'Order Delivered';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
+
+  const retryPayment = async (purchase: Purchase) => {
+    try {
+      if (!userPhone) {
+        Alert.alert('Error', 'Phone number not found. Please update your profile.');
+        return;
+      }
+
+      const response = await apiz.post(`/payments/retry/${purchase.id}`, {
+        phone_number: userPhone
+      });
+
+      if (response.data.status === 'success') {
+        Alert.alert(
+          'Payment Initiated',
+          'Please check your phone for the M-PESA prompt and enter your PIN to complete payment.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                if (response.data.data?.reference) {
+                  checkPaymentStatus(response.data.data.reference);
+                }
+              },
+            },
+          ]
+        );
+      } else {
+        throw new Error(response.data.message || 'Payment retry failed');
+      }
+    } catch (error: any) {
+      console.error('Payment retry error:', error);
+      Alert.alert(
+        'Error',
+        error.response?.data?.message || 'Failed to retry payment. Please try again.'
+      );
+    }
+  };
+
+  const checkPaymentStatus = (reference: string) => {
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    const checkInterval = setInterval(async () => {
+      try {
+        const response = await apiz.get(`/payments/status/${reference}`);
+        attempts++;
+
+        if (response.data.status === 'completed') {
+          clearInterval(checkInterval);
+          Alert.alert('Success', 'Payment completed successfully!');
+          fetchOrders(); // Refresh orders list
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkInterval);
+          Alert.alert(
+            'Payment Status',
+            'Unable to confirm payment status. If you completed the payment, it will be processed shortly.'
+          );
+        }
+      } catch (error) {
+        clearInterval(checkInterval);
+        console.error('Payment status check failed:', error);
+      }
+    }, 5000); // Check every 5 seconds
   };
 
   if (loading) {
@@ -122,7 +264,11 @@ export default function Orders() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {error ? (
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF4747" />
+          </View>
+        ) : error ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
           </View>
@@ -136,22 +282,15 @@ export default function Orders() {
           </View>
         ) : (
           orders.map((order) => (
-            <View key={order.id} style={styles.orderCard}>
+            <View key={`order-${order.id}`} style={styles.orderCard}>
               {/* Shop Header Section */}
               {order.product.shop && (
                 <Pressable
                   style={styles.shopHeader}
-                  onPress={() => navigateToShop(order.product.shop.id)}
+                  onPress={() => navigateToShop(order.product.shop.id!)}
                 >
                   <View style={styles.shopInfo}>
-                    {order.product.shop.image_url ? (
-                      <Image
-                        source={{ uri: mediaUrl + order.product.shop.image_url }}
-                        style={styles.shopLogo}
-                      />
-                    ) : (
-                      <Store size={20} color="#64748b" />
-                    )}
+                    <Store size={20} color="#64748b" />
                     <Text style={styles.shopName}>
                       {order.product.shop.lastname || order.product.shop.name || 'Unknown Shop'}
                     </Text>
@@ -162,17 +301,18 @@ export default function Orders() {
 
               <View style={styles.orderHeader}>
                 <View style={styles.statusContainer}>
-                  <Text
-                    style={[
-                      styles.statusText,
-                      order.status === 'completed' && styles.statusCompleted,
-                      order.status === 'pending' && styles.statusPending,
-                      order.status === 'cancelled' && styles.statusCancelled,
-                    ]}
-                  >
-                    {order.status.toUpperCase()}
+                  <Text style={[
+                    styles.statusText,
+                    getStatusStyle(order.status, order.status_color)
+                  ]}>
+                    {order.status_text}
                   </Text>
                 </View>
+                {order.payment_status === 'pending' && (
+                  <View style={styles.paymentStatus}>
+                    <Text style={styles.paymentStatusText}>Payment Required</Text>
+                  </View>
+                )}
                 <View style={styles.orderMeta}>
                   <Calendar size={16} color="#64748b" />
                   <Text style={styles.dateText}>
@@ -204,27 +344,39 @@ export default function Orders() {
                 </View>
               </View>
 
-              {order.status === 'pending' && (
+              {/* Update the action buttons conditional rendering */}
+              {(order.status === 'delivered' || (order.status === 'pending' && order.payment_status === 'pending')) && (
                 <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.receiveButton]}
-                    onPress={() => {
-                      Alert.alert(
-                        'Confirm Reception',
-                        'Have you received this order?',
-                        [
-                          { text: 'No', style: 'cancel' },
-                          {
-                            text: 'Yes, Received',
-                            onPress: () => updateOrderStatus(order.id, 'completed')
-                          }
-                        ]
-                      );
-                    }}
-                  >
-                    <Check size={20} color="#fff" style={styles.actionIcon} />
-                    <Text style={styles.actionButtonText}>Mark as Received</Text>
-                  </TouchableOpacity>
+                  {order.status === 'delivered' && (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.receiveButton]}
+                      onPress={() => {
+                        Alert.alert(
+                          'Confirm Reception',
+                          'Have you received this order?',
+                          [
+                            { text: 'No', style: 'cancel' },
+                            {
+                              text: 'Yes, Received',
+                              onPress: () => updateOrderStatus(order.id, 'completed')
+                            }
+                          ]
+                        );
+                      }}
+                    >
+                      <Check size={20} color="#fff" style={styles.actionIcon} />
+                      <Text style={styles.actionButtonText}>Mark as Received</Text>
+                    </TouchableOpacity>
+                  )}
+                  {order.payment_status === 'pending' && (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.paymentButton]}
+                      onPress={() => retryPayment(order)}
+                    >
+                      <DollarSign size={20} color="#fff" style={styles.actionIcon} />
+                      <Text style={styles.actionButtonText}>Complete Payment</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
             </View>
@@ -365,6 +517,8 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   statusCompleted: {
     color: '#059669',
@@ -430,26 +584,55 @@ const styles = StyleSheet.create({
     padding: 12,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ffffff', // Changed from #f8fafc to white
+    justifyContent: 'flex-end',
+    gap: 8,
   },
   actionButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
+    minWidth: 160,
+    elevation: 2, // Add elevation for Android
+    shadowColor: '#000', // Add shadow for iOS
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   receiveButton: {
     backgroundColor: '#FF4747',
   },
-  actionIcon: {
-    marginRight: 8,
+  paymentButton: {
+    backgroundColor: '#FF4747', // Make sure this is distinct
   },
   actionButtonText: {
-    color: '#ffffff',
+    color: '#ffffff', // Ensure text is white
     fontSize: 15,
     fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.25)', // Add text shadow
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  actionIcon: {
+    marginRight: 8,
+    color: '#ffffff', // Ensure icon is white
+  },
+  paymentStatus: {
+    backgroundColor: '#fff2f2',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+  paymentStatusText: {
+    color: '#FF4747', // Changed from green to match theme
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
