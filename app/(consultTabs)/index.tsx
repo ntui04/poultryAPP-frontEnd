@@ -126,7 +126,6 @@ export default function ConsultantsHome() {
                   <View style={styles.ratingContainer}>
                     <Star size={16} color="#FF4747" fill="#FF4747" />
                     <Text style={styles.rating}>{consultant.rating}</Text>
-                    <Text style={styles.reviews}>({consultant.reviews} reviews)</Text>
                   </View>
                 </View>
               </View>
@@ -141,16 +140,6 @@ export default function ConsultantsHome() {
                     <Text style={styles.infoLabel}>Education</Text>
                     <Text style={styles.infoValue}>{consultant.education}</Text>
                   </View>
-                </View>
-
-                <View style={styles.availabilityContainer}>
-                  <View style={styles.availabilityInfo}>
-                    <Clock size={16} color="#64748b" />
-                    <Text style={styles.nextAvailable}>Next available: {consultant.nextAvailable}</Text>
-                  </View>
-                  <Pressable style={styles.bookButton}>
-                    <Text style={styles.bookButtonText}>Book Now</Text>
-                  </Pressable>
                 </View>
               </View>
             </Pressable>
