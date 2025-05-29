@@ -18,6 +18,7 @@ import apiz, { productsApi } from '../services/api';
 import { mediaUrl } from '../services/api';
 import ProductDetailsModal from '../../components/ProductDetailsModal';
 import * as Location from 'expo-location';
+import { EXPO_PUBLIC_GOOGLE_API_KEY } from '@env'; // Ensure you have this in your .env file
 
 export default function ShopProfile() {
   const [refreshing, setRefreshing] = useState(false);
@@ -33,7 +34,11 @@ export default function ShopProfile() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const GOOGLE_API_KEY = 'AIzaSyCyzrcI5QUoMWtYxtvj7AkPfLUzLL5-WzU';
+  // Remove the hardcoded API key
+  // const GOOGLE_API_KEY = 'AIzaSyCyzrcI5QUoMWtYxtvj7AkPfLUzLL5-WzU';
+
+  // Use the environment variable instead
+  const GOOGLE_API_KEY = EXPO_PUBLIC_GOOGLE_API_KEY;
 
   useEffect(() => {
     const fetchToken = async () => {

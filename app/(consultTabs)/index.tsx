@@ -15,11 +15,12 @@ import { Search, Star, Clock, PlusCircle } from 'lucide-react-native';
 import { consultantsApi } from '../services/api';
 import { mediaUrl } from '../services/api';
 
+// Update the Consultant interface to match backend response
 interface Consultant {
   id: string;
   name: string;
   specialization: string;
-  image: string;
+  profile_image: string; // Changed from image to profile_image
   rating: number;
   reviews: number;
   experience: string;
@@ -117,8 +118,11 @@ export default function ConsultantsHome() {
             >
               <View style={styles.cardHeader}>
                 <Image 
-                  source={{ uri: mediaUrl + consultant.image }} 
-                  style={styles.consultantImage} 
+                  source={{ 
+                    uri: mediaUrl + consultant.profile_image 
+                  }} 
+                  style={styles.consultantImage}
+                  defaultSource={require('../../assets/images/default-profile.jpg')} // Add a default image
                 />
                 <View style={styles.headerInfo}>
                   <Text style={styles.consultantName}>{consultant.name}</Text>
@@ -218,6 +222,7 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     marginRight: 16,
+    backgroundColor: '#f1f5f9', // Add background color for image loading
   },
   headerInfo: {
     flex: 1,

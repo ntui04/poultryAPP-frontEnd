@@ -64,7 +64,12 @@ const Profile = () => {
       icon: <User size={20} color="#2563eb" />,
       onPress: () => router.push('/userprofile/profileinfo'),
     },
-   
+    {
+      id: 'agro_details',
+      title: 'Professional Details',
+      icon: <Users size={20} color="#2563eb" />,
+      onPress: () => router.push('/userprofile/agrodetails'),
+    },
     {
       id: 'location',
       title: 'Manage Addresses',

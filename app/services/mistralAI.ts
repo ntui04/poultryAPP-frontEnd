@@ -1,6 +1,8 @@
+import { EXPO_PUBLIC_MISTRAL_API_KEY, EXPO_PUBLIC_MISTRAL_API_URL } from '@env';
+
 class MistralAIService {
-  private readonly API_KEY = 'jTfupkTQAIECvDMBdAiPAd4Y4xZGpbFJ';
-  private readonly API_URL = 'https://api.mistral.ai/v1/chat/completions';
+  private readonly API_KEY = EXPO_PUBLIC_MISTRAL_API_KEY;
+  private readonly API_URL = EXPO_PUBLIC_MISTRAL_API_URL;
 
   // Keywords for validation
   private readonly POULTRY_KEYWORDS = {

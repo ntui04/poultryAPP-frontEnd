@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
 // const API_BASE_URL = 'http://127.0.0.1:8000/api';
-const API_BASE_URL = 'http://172.16.39.229:8000/api';
+const API_BASE_URL = 'http://192.168.126.32:8000/api';
 
 class AuthService {
   logout() {
