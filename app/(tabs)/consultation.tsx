@@ -1,33 +1,70 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Pressable } from 'react-native';
+import { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  Image, 
+  Pressable,
+  ActivityIndicator 
+} from 'react-native';
 import { router } from 'expo-router';
 import { Calendar, Clock, Star, MessageCircle, ShieldCheck } from 'lucide-react-native';
+import { consultantsApi } from '../services/api';
+import { mediaUrl } from '../services/api';
+
+interface Consultant {
+  id: string;
+  name: string;  // Update this if API returns combined name
+  firstname?: string;  // Add these if API returns separate names
+  lastname?: string;
+  specialization: string;
+  experience: string;
+  rating?: number;
+  profile_image: string;
+  education: string;
+}
 
 export default function Consultation() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [consultants, setConsultants] = useState<Consultant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const veterinarians = [
-    {
-      id: '1',
-      name: 'Dr. Sarah Wilson',
-      specialization: 'Poultry Health',
-      experience: '8 years',
-      rating: 4.8,
-      price: 2500,
-      image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2',
-      available: true,
-    },
-    {
-      id: '2',
-      name: 'Dr. John Carter',
-      specialization: 'Avian Medicine',
-      experience: '12 years',
-      rating: 4.9,
-      price: 3000,
-      image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d',
-      available: true,
-    },
-  ];
+  useEffect(() => {
+    fetchConsultants();
+  }, []);
+
+  const fetchConsultants = async () => {
+    try {
+      setLoading(true);
+      const response = await consultantsApi.getAvailableConsultants();
+      setConsultants(response.data);
+    } catch (error) {
+      console.error('Error fetching consultants:', error);
+      setError('Failed to load consultants');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF4747" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Pressable style={styles.retryButton} onPress={fetchConsultants}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -39,32 +76,36 @@ export default function Consultation() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Top Veterinarians</Text>
-        {veterinarians.map((vet) => (
+        <Text style={styles.sectionTitle}>Available Consultants</Text>
+        {consultants.map((consultant) => (
           <Pressable
-            key={vet.id}
+            key={consultant.id}
             style={styles.vetCard}
-            onPress={() => router.push(`/book-consultation/${vet.id}`)}
+            // onPress={() => router.push(`/book-consultation/${consultant.id}`)}
           >
-            <Image source={{ uri: vet.image }} style={styles.vetImage} />
+            <Image 
+              source={{ 
+                uri: consultant.profile_image 
+                  ? mediaUrl + consultant.profile_image 
+                  : '../../assets/images/default-avatar.png'
+              }} 
+              style={styles.vetImage}
+            />
             <View style={styles.vetInfo}>
               <View style={styles.vetHeader}>
-                <Text style={styles.vetName}>{vet.name}</Text>
-                <View style={styles.ratingContainer}>
-                  <Star size={16} color="#FF4747" fill="#FF4747" />
-                  <Text style={styles.rating}>{vet.rating}</Text>
-                </View>
-              </View>
-              <Text style={styles.specialization}>{vet.specialization}</Text>
-              <Text style={styles.experience}>{vet.experience} experience</Text>
-              <View style={styles.consultationMeta}>
-                <Text style={styles.price}>TSH {vet.price}</Text>
-                {vet.available && (
-                  <View style={styles.availableTag}>
-                    <Text style={styles.availableText}>Available Now</Text>
+                <Text style={styles.vetName}>
+                  {consultant.name || `${consultant.firstname} ${consultant.lastname}`}
+                </Text>
+                {consultant.rating && (
+                  <View style={styles.ratingContainer}>
+                    <Star size={16} color="#FF4747" fill="#FF4747" />
+                    <Text style={styles.rating}>{consultant.rating}</Text>
                   </View>
                 )}
               </View>
+              <Text style={styles.specialization}>{consultant.specialization}</Text>
+              <Text style={styles.experience}>{consultant.experience} experience</Text>
+              <Text style={styles.education}>{consultant.education}</Text>
             </View>
           </Pressable>
         ))}
@@ -265,5 +306,40 @@ const styles = StyleSheet.create({
     color: '#64748b',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ef4444',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#FF4747',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  education: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 4,
   },
 });

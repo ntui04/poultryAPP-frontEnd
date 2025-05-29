@@ -91,6 +91,8 @@ export const consultantsApi = {
   },
   update: (id: string, data: any) => apiz.put(`/consultants/${id}`, data),
   delete: (id: string) => apiz.delete(`/consultants/${id}`),
+  getAvailableConsultants: () => apiz.get('/agro-officers'),
+  getConsultantProfile: (id: string) => apiz.get(`/agro-officers/${id}`),
 };
 
 
