@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   receiveButton: {
-    backgroundColor: '#FF4747',
+    backgroundColor: 'green',
   },
   paymentButton: {
     backgroundColor: '#FF4747', // Make sure this is distinct
