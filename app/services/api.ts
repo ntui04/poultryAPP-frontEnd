@@ -10,7 +10,7 @@ const apiz = axios.create({
   }
 })
 
-export const BASE_URL = 'http:/172.16.39.33:8000';
+export const BASE_URL = 'http:/172.165.39.33:8000';
 export const mediaUrl = `${BASE_URL}/storage/`;
 
 apiz.interceptors.request.use(
