@@ -6,7 +6,8 @@ import {
   ScrollView, 
   TextInput, 
   ActivityIndicator,
-  Alert 
+  Alert,
+  Image
 } from 'react-native';
 import { router } from 'expo-router';
 import { Button } from '@/components/ui/Button';
@@ -14,35 +15,120 @@ import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/stores/auth';
 import { Save, ArrowLeft } from 'lucide-react-native';
 import apiz from '../services/api';
+import * as ImagePicker from 'expo-image-picker';
+import { Camera } from 'lucide-react-native';
+import {mediaUrl} from '../services/api';
 
 export default function EditShop() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.business_name || '',
-    description: user?.description || '',
-    address: user?.location || '',
-    phone: user?.phone_number || '',
-    openTime: '8:00 AM',
-    closeTime: '6:00 PM',
-    workingDays: 'Monday - Saturday',
+    firstname: user?.firstname || '',
+    lastname: user?.lastname || '',
+    phone_number: user?.phone_number || '',
+    email: user?.email || '',
+    location: user?.location || '',
+    business_name: user?.business_name || '',
+    profile_image: null as any, // For image file
+    password: '',
+    password_confirmation: '',
   });
 
-  const handleSubmit = async () => {
+  const handleImagePick = async () => {
     try {
-      setLoading(true);
-      await apiz.put('/shop/profile', formData);
-      Alert.alert('Success', 'Shop profile updated successfully');
-      router.back();
-    } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error.response?.data?.message || 'Failed to update shop profile'
-      );
-    } finally {
-      setLoading(false);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setFormData(prev => ({
+          ...prev,
+          profile_image: result.assets[0],
+        }));
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
     }
   };
+const handleSubmit = async () => {
+  try {
+    setLoading(true);
+
+    // Validate required fields
+    const requiredFields = ['firstname', 'lastname', 'phone_number', 'email', 'location', 'business_name'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+      Alert.alert(
+        'Required Fields',
+        `Please fill in all required fields: ${missingFields.join(', ')}`
+      );
+      return;
+    }
+
+    // Create FormData instance
+    const submitData = new FormData();
+
+    // Append all text fields
+    submitData.append('firstname', formData.firstname);
+    submitData.append('lastname', formData.lastname);
+    submitData.append('phone_number', formData.phone_number);
+    submitData.append('email', formData.email);
+    submitData.append('location', formData.location);
+    submitData.append('business_name', formData.business_name);
+
+    // Only append password fields if a new password is being set
+    if (formData.password) {
+      if (formData.password.length < 6) {
+        Alert.alert('Error', 'Password must be at least 6 characters long');
+        return;
+      }
+      if (formData.password !== formData.password_confirmation) {
+        Alert.alert('Error', 'Passwords do not match');
+        return;
+      }
+      submitData.append('password', formData.password);
+      submitData.append('password_confirmation', formData.password_confirmation);
+    }
+
+    // Append image if selected
+    if (formData.profile_image?.uri) {
+      const imageUri = formData.profile_image.uri;
+      const filename = imageUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename || '');
+      const type = match ? `image/${match[1]}` : 'image';
+
+      submitData.append('profile_image', {
+        uri: imageUri,
+        name: filename,
+        type,
+      } as any);
+    }
+
+    // REMOVE the Content-Type header - let React Native set it automatically
+    const response = await apiz.put('/agroshop/profiles', submitData);
+
+    if (response.data.status === 'success') {
+      Alert.alert('Success', response.data.message);
+      router.back();
+    } else {
+      throw new Error(response.data.message || 'Failed to update profile');
+    }
+
+  } catch (error: any) {
+    console.error('Profile update error:', error);
+    Alert.alert(
+      'Error',
+      error.response?.data?.message || 'Failed to update shop profile'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <View style={styles.container}>
@@ -59,65 +145,99 @@ export default function EditShop() {
 
       <ScrollView style={styles.content}>
         <View style={styles.form}>
+          <View style={styles.imageSection}>
+            <Button 
+              onPress={handleImagePick} 
+              style={styles.imagePickerButton}
+              variant="outline"
+            >
+              {formData.profile_image?.uri ? (
+                <Image 
+                  source={{ uri: formData.profile_image.uri }} 
+                  style={styles.profileImage}
+                />
+              ) : user?.profile_image ? (
+                <Image 
+                  source={{ uri: `${mediaUrl}${user.profile_image}` }} 
+                  style={styles.profileImage}
+                />
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Camera size={24} color="#64748b" />
+                  <Text style={styles.imagePlaceholderText}>Add Profile Image</Text>
+                </View>
+              )}
+            </Button>
+          </View>
+
+          <Input
+            label="First Name"
+            value={formData.firstname}
+            onChangeText={(text) => setFormData({ ...formData, firstname: text })}
+            placeholder="Enter your first name"
+            containerStyle={styles.field}
+          />
+
+          <Input
+            label="Last Name"
+            value={formData.lastname}
+            onChangeText={(text) => setFormData({ ...formData, lastname: text })}
+            placeholder="Enter your last name"
+            containerStyle={styles.field}
+          />
+
           <Input
             label="Business Name"
-            value={formData.name}
-            onChangeText={(text) => setFormData({ ...formData, name: text })}
+            value={formData.business_name}
+            onChangeText={(text) => setFormData({ ...formData, business_name: text })}
             placeholder="Enter your business name"
             containerStyle={styles.field}
           />
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-              style={styles.textarea}
-              value={formData.description}
-              onChangeText={(text) => setFormData({ ...formData, description: text })}
-              placeholder="Describe your business"
-              multiline
-              numberOfLines={4}
-              placeholderTextColor="#94a3b8"
-            />
-          </View>
-
           <Input
-            label="Address"
-            value={formData.address}
-            onChangeText={(text) => setFormData({ ...formData, address: text })}
-            placeholder="Enter business address"
+            label="Email"
+            value={formData.email}
+            onChangeText={(text) => setFormData({ ...formData, email: text })}
+            placeholder="Enter your email"
             containerStyle={styles.field}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
 
           <Input
             label="Phone Number"
-            value={formData.phone}
-            onChangeText={(text) => setFormData({ ...formData, phone: text })}
+            value={formData.phone_number}
+            onChangeText={(text) => setFormData({ ...formData, phone_number: text })}
             placeholder="Enter contact number"
             containerStyle={styles.field}
             keyboardType="phone-pad"
           />
 
-          <View style={styles.timeSection}>
-            <Text style={styles.sectionTitle}>Business Hours</Text>
-            <View style={styles.row}>
-              <View style={styles.halfField}>
-                <Input
-                  label="Opening Time"
-                  value={formData.openTime}
-                  onChangeText={(text) => setFormData({ ...formData, openTime: text })}
-                  placeholder="e.g. 8:00 AM"
-                />
-              </View>
-              <View style={styles.halfField}>
-                <Input
-                  label="Closing Time"
-                  value={formData.closeTime}
-                  onChangeText={(text) => setFormData({ ...formData, closeTime: text })}
-                  placeholder="e.g. 6:00 PM"
-                />
-              </View>
-            </View>
-          </View>
+          <Input
+            label="Location"
+            value={formData.location}
+            onChangeText={(text) => setFormData({ ...formData, location: text })}
+            placeholder="Enter business location"
+            containerStyle={styles.field}
+          />
+
+          <Input
+            label="New Password (Optional)"
+            value={formData.password}
+            onChangeText={(text) => setFormData({ ...formData, password: text })}
+            placeholder="Enter new password"
+            containerStyle={styles.field}
+            secureTextEntry
+          />
+
+          <Input
+            label="Confirm New Password"
+            value={formData.password_confirmation}
+            onChangeText={(text) => setFormData({ ...formData, password_confirmation: text })}
+            placeholder="Confirm new password"
+            containerStyle={styles.field}
+            secureTextEntry
+          />
 
           <Button 
             onPress={handleSubmit} 
@@ -219,5 +339,30 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  imageSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  imagePickerButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: 'hidden',
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePlaceholder: {
+    alignItems: 'center',
+  },
+  imagePlaceholderText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#64748b',
   },
 });
