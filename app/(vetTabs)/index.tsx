@@ -251,7 +251,7 @@ export default function ShopProfile() {
             </Button>
           </View>
 
-          <Text style={styles.description}>{user.description || 'No description available'}</Text>
+          {/* <Text style={styles.description}>{user.description || 'No description available'}</Text> */}
 
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
